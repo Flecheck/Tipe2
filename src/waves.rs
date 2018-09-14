@@ -19,10 +19,10 @@ pub fn tracing(world: &mut WorldDescriptor) {
     let (s, r) = channel::unbounded();
     let (so, ro) = channel::unbounded();
 
-    for x in &world.emitters {
+    for (ide, x) in world.emitters.iter().enumerate() {
         let rays = emit(&x.position).map(|ray| (ray, x.max_power, 0.));
         for ray in rays {
-            s.send(ray);
+            s.send((ide, ray));
         }
     }
 
@@ -31,20 +31,22 @@ pub fn tracing(world: &mut WorldDescriptor) {
         let s = s.clone();
         let so = so.clone();
         thread::spawn(move || {
-            for ray in r {
-                let c = find_receiver(&ray);
-                so.send(c);
+            for (ide, ray) in r {
+                let cs = find_receiver(&ray);
+                for c in cs.into_iter().map(|(idr, pow, dist)| (ide, idr, pow, dist)) {
+                    so.send(c);
+                }
                 for ray in next_rays(&ray) {
-                    s.send(ray);
+                    s.send((ide, ray));
                 }
             }
         });
     }
     drop(s);
 
-    /* for (ide, idr, pow, dist) in ro {
-        world.emitters[ide]
-    } */
+    for (ide, idr, pow, dist) in ro {
+        world.emitters[ide].transfers[idr].push((pow, dist));
+    }
 }
 
 fn emit<'a>(pos: &'a Point3<f32>) -> impl Iterator<Item = Ray<f32>> + 'a {
@@ -58,7 +60,7 @@ fn emit<'a>(pos: &'a Point3<f32>) -> impl Iterator<Item = Ray<f32>> + 'a {
     })
 }
 
-fn find_receiver(ray: &EnergyRay) {
+fn find_receiver(ray: &EnergyRay) -> Vec<(usize, f32, f32)> {
     unimplemented!()
 }
 
