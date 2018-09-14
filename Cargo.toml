@@ -4,3 +4,8 @@ version = "0.1.0"
 authors = ["Théo Degioanni <moxinilian@tutanota.com>"]
 
 [dependencies]
+nalgebra = "0.16"
+ncollide3d = "0.14"
+rand = "0.5"
+rayon = "1.0"
+serde = "1.0"
