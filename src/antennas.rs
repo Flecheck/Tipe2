@@ -3,7 +3,6 @@ use ncollide3d::shape::ShapeHandle;
 
 pub struct SignalReceiver {
     position: Point3<f32>,
-    max_power: f32,
 }
 
 pub struct SignalEmitter {
