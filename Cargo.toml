@@ -1,10 +1,7 @@
-cargo-features = ["edition"]
-
 [package]
 name = "tipe2"
 version = "0.1.0"
 authors = ["Théo Degioanni <moxinilian@tutanota.com>"]
-edition = "2018"
 
 [dependencies]
 nalgebra = "0.16"
