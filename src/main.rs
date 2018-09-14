@@ -32,6 +32,6 @@ fn main() {
     if let Some(_) = matches.subcommand_matches("transfer") {
         transfer::transfer();
     } else {
-        println!("Command not found.\nUse 'help' for help.");
+        println!("Unimplemented yet\nUse 'help' for help.");
     }
 }
