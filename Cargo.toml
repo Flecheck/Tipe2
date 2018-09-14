@@ -1,0 +1,6 @@
+[package]
+name = "Tipe2"
+version = "0.1.0"
+authors = ["Théo Degioanni <moxinilian@tutanota.com>"]
+
+[dependencies]
