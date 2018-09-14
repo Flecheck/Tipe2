@@ -6,11 +6,12 @@ extern crate nalgebra;
 extern crate ncollide3d;
 extern crate rayon;
 
-use clap::{App, Arg, SubCommand};
+use clap::{App, SubCommand};
 
 mod antennas;
 mod transfer;
 mod waves;
+mod world;
 
 pub type Float = f32;
 
