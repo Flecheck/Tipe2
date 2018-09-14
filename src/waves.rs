@@ -2,6 +2,7 @@ use antennas::*;
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
+use ncollide3d::query::RayIntersectionCostFn;
 use ncollide3d::shape::ShapeHandle;
 use rayon::prelude;
 use std;
@@ -41,9 +42,9 @@ pub fn tracing(world: &mut WorldDescriptor) {
     }
     drop(s);
 
-    for (ide, idr, pow, dist) in ro {
+    /* for (ide, idr, pow, dist) in ro {
         world.emitters[ide]
-    }
+    } */
 }
 
 fn emit<'a>(pos: &'a Point3<f32>) -> impl Iterator<Item = Ray<f32>> + 'a {

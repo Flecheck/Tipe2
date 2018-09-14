@@ -1,4 +1,7 @@
+use waves;
+use world;
+
 pub fn transfer() {
-    let world = world::get_main_world();
+    let mut world = world::get_main_world();
     waves::tracing(&mut world);
 }
