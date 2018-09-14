@@ -1,9 +1,12 @@
 #![feature(nll)]
 
+extern crate crossbeam_channel;
 extern crate nalgebra;
 extern crate ncollide3d;
+extern crate rayon;
 
 mod antennas;
+mod waves;
 
 pub type Float = f32;
 
