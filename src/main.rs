@@ -2,6 +2,7 @@
 
 extern crate clap;
 extern crate crossbeam_channel;
+extern crate crossbeam_deque;
 extern crate nalgebra;
 extern crate ncollide3d;
 extern crate rayon;

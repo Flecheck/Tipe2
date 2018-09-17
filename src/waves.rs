@@ -4,7 +4,7 @@ use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
 use ncollide3d::query::RayIntersectionCostFn;
 use ncollide3d::shape::ShapeHandle;
-use rayon::prelude;
+use rayon::prelude::*;
 use std;
 use std::thread;
 
@@ -16,38 +16,40 @@ const PI: f32 = std::f32::consts::PI;
 pub type EnergyRay = (Ray<f32>, f32, f32);
 
 pub fn tracing(world: &mut WorldDescriptor) {
-    // TODO Use stack
-    let (s, r) = channel::unbounded();
     let (so, ro) = channel::unbounded();
 
-    for (ide, x) in world.emitters.iter().enumerate() {
-        let rays = emit(&x.position).map(|ray| (ray, x.max_power, 0.));
-        for ray in rays {
-            s.send((ide, ray));
-        }
+    let rays = world
+        .emitters
+        .iter()
+        .enumerate()
+        .flat_map(|(ide, x)| {
+            emit(&x.position)
+                .map(move |ray| (ray, x.max_power, 0.))
+                .map(move |ray| (ide, ray))
+        }).collect::<Vec<_>>();
+
+    thread::spawn(move || {
+        rays.into_iter().for_each(|x| process(x, &so));
+    });
+
+    for (ide, idr, time, dist) in ro {
+        world.emitters[ide].transfers[idr].push((time, dist));
+    }
+}
+
+fn process((ide, ray): (usize, (EnergyRay)), out: &channel::Sender<(usize, usize, u32, f32)>) {
+    let cs = find_receiver(&ray);
+    for c in cs
+        .into_iter()
+        .map(|(idr, time, dist)| (ide, idr, time, dist))
+    {
+        out.send(c);
     }
 
-    for _ in 0..4 {
-        let r = r.clone();
-        let s = s.clone();
-        let so = so.clone();
-        thread::spawn(move || {
-            for (ide, ray) in r {
-                let cs = find_receiver(&ray);
-                for c in cs.into_iter().map(|(idr, pow, dist)| (ide, idr, pow, dist)) {
-                    so.send(c);
-                }
-                for ray in next_rays(&ray) {
-                    s.send((ide, ray));
-                }
-            }
-        });
-    }
-    drop(s);
-
-    for (ide, idr, pow, dist) in ro {
-        world.emitters[ide].transfers[idr].push((pow, dist));
-    }
+    next_rays(&ray)
+        .into_par_iter()
+        .map(|x| (ide, x))
+        .for_each(|x| process(x, out));
 }
 
 fn emit<'a>(pos: &'a Point3<f32>) -> impl Iterator<Item = Ray<f32>> + 'a {
@@ -61,7 +63,7 @@ fn emit<'a>(pos: &'a Point3<f32>) -> impl Iterator<Item = Ray<f32>> + 'a {
     })
 }
 
-fn find_receiver(ray: &EnergyRay) -> Vec<(usize, f32, f32)> {
+fn find_receiver(ray: &EnergyRay) -> Vec<(usize, u32, f32)> {
     unimplemented!()
 }
 
