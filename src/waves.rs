@@ -16,7 +16,7 @@ const PI: f32 = std::f32::consts::PI;
 pub type EnergyRay = (Ray<f32>, f32, f32);
 
 pub fn tracing(world: &mut WorldDescriptor) {
-    let (so, ro) = channel::unbounded();
+    let (so, ro) = channel::bounded(1000);
 
     let rays = world
         .emitters
