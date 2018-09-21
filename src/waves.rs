@@ -1,22 +1,24 @@
-use antennas::*;
+use antennas::WorldDescriptor;
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
 use ncollide3d::query::RayIntersectionCostFn;
 use ncollide3d::shape::ShapeHandle;
-use rayon::prelude::*;
+use rayon;
+use rayon::prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use std;
-use std::thread;
 
 const NB_SAMPLE: u32 = 100;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
 
-pub type EnergyRay = (Ray<f32>, f32, f32);
+/// (Ray,power,distance)
+type EnergyRay = (Ray<f32>, f32, f32);
 
+/// Do the ray tracing and populate emetters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
-    let (so, ro) = channel::bounded(1000);
+    let (so, ro) = channel::bounded(10_000);
 
     let rays = world
         .emitters
@@ -28,7 +30,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                 .map(move |ray| (ide, ray))
         }).collect::<Vec<_>>();
 
-    thread::spawn(move || {
+    rayon::spawn(move || {
         rays.into_iter().for_each(|x| process(x, &so));
     });
 
