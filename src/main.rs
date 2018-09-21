@@ -1,4 +1,4 @@
-#![feature(nll, proc_macro, generators)]
+#![feature(nll)]
 
 extern crate clap;
 extern crate crossbeam_channel;
