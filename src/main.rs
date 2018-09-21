@@ -1,9 +1,9 @@
-#![feature(nll)]
+#![feature(nll, proc_macro, generators)]
 
 extern crate clap;
 extern crate crossbeam_channel;
 extern crate crossbeam_deque;
-extern crate nalgebra;
+extern crate futures_await as futures;
 extern crate ncollide3d;
 extern crate rayon;
 
@@ -25,7 +25,8 @@ fn main() {
         .version("1.0")
         .author(
             "Théo Degioanni <moxinilian@tutanota.com> & Mathieu Bessou <bessou.mathieu@gmail.com>",
-        ).subcommand(SubCommand::with_name("transfer").about("Builds transfer functions"))
+        )
+        .subcommand(SubCommand::with_name("transfer").about("Builds transfer functions"))
         .subcommand(SubCommand::with_name("simulate").about("Runs the simulation"))
         .subcommand(SubCommand::with_name("view").about("Opens the 3D view"))
         .get_matches();
