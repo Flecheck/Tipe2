@@ -108,6 +108,7 @@ fn emit<'a>(pos: &'a Point3<f32>) -> impl Iterator<Item = Ray<f32>> + 'a {
     })
 }
 
+// Lamberian Reflectance
 fn find_receiver(
     ray: &Ray<f32>,
     power: f32,
