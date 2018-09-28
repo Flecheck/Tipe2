@@ -8,7 +8,6 @@ use ncollide3d::partitioning::BVT;
 use ncollide3d::query::Ray;
 use ncollide3d::query::RayCast;
 use ncollide3d::query::RayIntersection;
-use ncollide3d::shape::{Shape, ShapeHandle};
 
 pub struct SignalReceiver {
     pub position: Point3<f32>,
@@ -28,13 +27,13 @@ pub struct WorldDescriptor {
 }
 
 pub struct SceneObject {
-    geometry: Box<RayCast<f32> + Sync>,
+    geometry: Box<RayCast<f32> + Sync + Send>,
     transform: Isometry<f32>,
 }
 impl SceneObject {
     pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>) -> SceneObject
     where
-        G: 'static + Sync + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
+        G: 'static + Sync + Send + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
     {
         SceneObject {
             geometry,
