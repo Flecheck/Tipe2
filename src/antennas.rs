@@ -14,11 +14,16 @@ pub struct SignalReceiver {
     pub position: Point3<f32>,
 }
 
+pub struct SignalEvent {
+    pub time: u32,
+    pub gain: f32,
+}
+
 pub struct SignalEmitter {
     pub position: Point3<f32>,
     pub max_power: f32,
 
-    pub transfers: Vec<Vec<(u32, f32)>>, // indexed by emitter, (time, gain)
+    pub transfers: Vec<Vec<SignalEvent>>, // indexed by receiver, (time, gain)
 }
 
 pub struct WorldDescriptor {

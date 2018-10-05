@@ -6,11 +6,15 @@ extern crate crossbeam_deque;
 extern crate nalgebra;
 extern crate ncollide3d;
 extern crate rayon;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 
 use clap::{App, SubCommand};
 
 mod antennas;
 mod transfer;
+mod simulation;
 mod waves;
 mod world;
 
@@ -19,6 +23,8 @@ pub type Float = f32;
 pub const WAVE_VELOCITY: Float = 299_792_458.; // meters per second
 pub const MAX_FREQUENCY: Float = 60_000_000_000.;
 pub const TIME_PER_BEAT: Float = 1. / MAX_FREQUENCY; // seconds
+
+pub const CHANNEL_BOUND: usize = 65536;
 
 fn main() {
     let matches = App::new("Tipe2")

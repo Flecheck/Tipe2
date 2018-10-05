@@ -1,4 +1,4 @@
-use antennas::WorldDescriptor;
+use antennas::{WorldDescriptor, SignalEvent};
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
@@ -35,7 +35,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
     });
 
     for (ide, idr, time, dist) in ro {
-        world.emitters[ide].transfers[idr].push((time, dist));
+        world.emitters[ide].transfers[idr].push(SignalEvent { time, gain: dist });
     }
 }
 
