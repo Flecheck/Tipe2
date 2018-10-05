@@ -1,16 +1,18 @@
 use crossbeam_channel::{bounded, Receiver, Sender};
 use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::partitioning::BVT;
-use std::cmp::min;
+use serde::{Deserialize, Serialize};
+use std::cmp::{min, max};
 use std::thread;
 use CHANNEL_BOUND;
 
 use world::World;
 
-use antennas::{SignalEmitter, SignalReceiver, WorldDescriptor, SceneObject};
+use antennas::{SceneObject, SerializableWorld, SignalEmitter, SignalReceiver, WorldDescriptor};
 
 pub type AntennaID = usize;
 
+#[derive(Serialize, Deserialize)]
 pub struct AntennaAllocator {
     next_antenna: AntennaID,
     emitters: Vec<SignalEmitter>,
@@ -97,7 +99,7 @@ impl Simulation {
         self
     }
 
-    pub fn solve(&mut self, world: World) {
+    pub fn solve(&mut self, world: World) -> WorldDescriptor {
         let mut allocator = AntennaAllocator::new();
         for s in &mut self.systems {
             s.register_antennas(&world, &mut allocator);
@@ -112,6 +114,14 @@ impl Simulation {
             collisions: world.get_bvt(),
         };
 
+        use waves::tracing;
+        tracing(&mut world);
+
+        world
+    }
+
+    pub fn run(&mut self, emitters: Vec<SignalEmitter>, receivers: Vec<SignalReceiver>) {
+        let total_allocated = max(emitters.len(), receivers.len());
         for k in 0..total_allocated {
             let (send, recv) = bounded(CHANNEL_BOUND);
             self.receivers_storage[k] = AntennaStream { channel: recv };
@@ -120,5 +130,7 @@ impl Simulation {
             self.emitters_storage[k] = AntennaSink { channel: send };
             self.process_emitters[k] = recv;
         }
+
+
     }
 }
