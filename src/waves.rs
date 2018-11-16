@@ -91,8 +91,6 @@ fn process(
                 (ide, idr, (dist / WAVE_VELOCITY).floor() as u32, energy)
             }).for_each(|c| out.send(c));
 
-        let pow = energy * LOST_PER_BOUNCE;
-
         let refraction = next_rays_refraction(&ray, &inter, n, n2).into_par_iter();
         let reflection = next_rays_reflection(&ray, &inter)
             .into_par_iter()
@@ -100,8 +98,15 @@ fn process(
 
         reflection
             .chain(refraction)
-            .map(|(ray, n)| (ray, pow, dist + dist_plus, max_energy, n))
-            .map(|x| (ide, x))
+            .map(|(ray, n)| {
+                (
+                    ray.translate_by(ray.dir * 0.001),
+                    energy,
+                    dist + dist_plus,
+                    max_energy,
+                    n,
+                )
+            }).map(|x| (ide, x))
             .for_each(|x| process(x, out, receivers, bvs));
     }
 }
@@ -174,7 +179,7 @@ fn next_rays_refraction(
     let normal = normalize(&inter.1.normal);
     let normal_l = dot(&normal, &ray.dir) * normal;
 
-    let refraction = -(n2 / n1 * (ray.dir - normal_l) + normal_l);
+    let refraction = normalize(&-(n2 / n1 * (ray.dir - normal_l) + normal_l));
 
     vec![(Ray::new(ray.origin + ray.dir * inter.1.toi, refraction), n2)]
 }
