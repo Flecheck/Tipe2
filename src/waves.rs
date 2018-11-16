@@ -1,4 +1,4 @@
-use antennas::{WorldDescriptor, SignalEvent};
+use antennas::{SignalEvent, WorldDescriptor};
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
@@ -13,7 +13,7 @@ use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::partitioning::BVT;
 
 use antennas::ClosestRayTOICostFn;
-use antennas::{SceneObject, SignalEmitter, SignalReceiver, WorldDescriptor};
+use antennas::{SceneObject, SignalEmitter, SignalReceiver};
 use ncollide3d::query::RayIntersection;
 
 use nalgebra::{dot, norm, normalize};
@@ -22,11 +22,11 @@ const NB_SAMPLE: u32 = 100;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
-const MIN_ENERGY: f32 = 0.001;
+const MIN_GAIN: f32 = 0.001;
 const LOST_PER_BOUNCE: f32 = 0.7;
 
-/// (Ray,power,distance,max_energy)
-type EnergyRay = (Ray<f32>, f32, f32, f32);
+/// (Ray,energy,distance,max_energy,n)
+type EnergyRay = (Ray<f32>, f32, f32, f32, f32);
 
 /// Do the ray tracing and populate emetters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
@@ -47,7 +47,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
         let ref collisions = world.collisions;
         s.spawn(move |s| {
             rays.into_iter()
-                .map(|(ide, (ray, power, dist))| (ide, (ray, power, dist, power)))
+                .map(|(ide, (ray, power, dist))| (ide, (ray, power, dist, power, 1.)))
                 .for_each(|x| process(x, &so, receivers, collisions));
         });
 
@@ -55,8 +55,10 @@ pub fn tracing(world: &mut WorldDescriptor) {
             for emitter in world.emitters.iter_mut() {
                 if line(&receiver, emitter.position, &collisions) {
                     let dist = norm(&(receiver.position - emitter.position));
-                    let power = emitter.max_power;
-                    emitter.transfers[idr].push(((dist / WAVE_VELOCITY).floor() as u32, power));
+                    emitter.transfers[idr].push(SignalEvent {
+                        time: (dist / WAVE_VELOCITY).floor() as u32,
+                        gain: 1.,
+                    });
                 }
             }
         }
@@ -68,31 +70,37 @@ pub fn tracing(world: &mut WorldDescriptor) {
 }
 
 fn process(
-    (ide, (ray, pow, dist, max_energy)): (usize, EnergyRay),
+    (ide, (ray, energy, dist, max_energy, n)): (usize, EnergyRay),
     out: &channel::Sender<(usize, usize, u32, f32)>,
     receivers: &Vec<SignalReceiver>,
     bvs: &BVT<SceneObject, AABB<f32>>,
 ) {
-    if pow < MIN_ENERGY {
+    if energy / max_energy < MIN_GAIN {
         return;
     }
     let mut visitor = ClosestRayTOICostFn::new(&ray);
     if let Some(inter) = bvs.best_first_search(&mut visitor) {
-        let dist_plus = norm(&(ray.dir * inter.1.toi));
+        let dist_plus = norm(&(ray.dir * inter.1.toi)) / n;
+        let n2 = inter.0.n;
 
-        find_receiver(&ray, pow, &inter, receivers, bvs)
+        find_receiver(&ray, energy, &inter, receivers, bvs)
             .into_iter()
             .map(|(idr, energy, dist)| (ide, idr, energy, dist + dist_plus))
-            .filter(|r| r.2 < MIN_ENERGY)
+            .filter(|r| r.2 / max_energy < MIN_GAIN)
             .map(|(ide, idr, energy, dist)| {
                 (ide, idr, (dist / WAVE_VELOCITY).floor() as u32, energy)
             }).for_each(|c| out.send(c));
 
-        let pow = pow * LOST_PER_BOUNCE;
+        let pow = energy * LOST_PER_BOUNCE;
 
-        next_rays(&ray, &inter)
+        let refraction = next_rays_refraction(&ray, &inter, n, n2).into_par_iter();
+        let reflection = next_rays_reflection(&ray, &inter)
             .into_par_iter()
-            .map(|ray| (ray, pow, dist + dist_plus, max_energy))
+            .map(|x| (x, n));
+
+        reflection
+            .chain(refraction)
+            .map(|(ray, n)| (ray, pow, dist + dist_plus, max_energy, n))
             .map(|x| (ide, x))
             .for_each(|x| process(x, out, receivers, bvs));
     }
@@ -146,10 +154,27 @@ fn line(receiver: &SignalReceiver, point: Point3<f32>, bvs: &BVT<SceneObject, AA
     true
 }
 
-fn next_rays(ray: &Ray<f32>, inter: &(&SceneObject, RayIntersection<f32>)) -> Vec<Ray<f32>> {
+fn next_rays_reflection(
+    ray: &Ray<f32>,
+    inter: &(&SceneObject, RayIntersection<f32>),
+) -> Vec<Ray<f32>> {
     let normal = normalize(&inter.1.normal);
 
     let reflection = 2. * dot(&normal, &ray.dir) * normal - ray.dir;
 
     vec![Ray::new(ray.origin + ray.dir * inter.1.toi, reflection)]
+}
+
+fn next_rays_refraction(
+    ray: &Ray<f32>,
+    inter: &(&SceneObject, RayIntersection<f32>),
+    n1: f32,
+    n2: f32,
+) -> Vec<(Ray<f32>, f32)> {
+    let normal = normalize(&inter.1.normal);
+    let normal_l = dot(&normal, &ray.dir) * normal;
+
+    let refraction = -(n2 / n1 * (ray.dir - normal_l) + normal_l);
+
+    vec![(Ray::new(ray.origin + ray.dir * inter.1.toi, refraction), n2)]
 }

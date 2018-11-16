@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Théo Degioanni <moxinilian@tutanota.com>","Mathieu Bessou <bessou.mathieu@gmail.com>"]
 
 [dependencies]
-nalgebra = "0.16"
 ncollide3d = "0.17"
 rand = "0.5"
 rayon = "1.0"
@@ -14,3 +13,7 @@ ron = "0.4.0"
 crossbeam-deque = "0.6.1"
 clap = "2.32"
 crossbeam-channel = "0.2.6"
+
+[dependencies.nalgebra]
+version = "0.16"
+features = ["serde-serialize"]
