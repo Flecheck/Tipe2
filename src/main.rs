@@ -9,6 +9,7 @@ extern crate rayon;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate specs;
 extern crate ron;
 
 use clap::{App, SubCommand};
@@ -18,6 +19,7 @@ mod transfer;
 mod simulation;
 mod waves;
 mod world;
+mod systems;
 
 pub type Float = f32;
 

@@ -6,7 +6,7 @@ use ncollide3d::partitioning::BVT;
 use ncollide3d::query::RayCast;
 use ncollide3d::shape::Cuboid;
 
-use antennas::SceneObject;
+/*use antennas::SceneObject;
 
 pub struct Singularity {
     label: String,
@@ -58,3 +58,4 @@ pub fn dummy_world() -> WorldDescriptor {
         collisions,
     }
 }
+*/

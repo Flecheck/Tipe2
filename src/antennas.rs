@@ -16,7 +16,7 @@ pub struct SignalReceiver {
 
 #[derive(Clone)]
 pub struct SignalEvent {
-    pub time: u32,
+    pub time: usize,
     pub gain: f32,
 }
 
