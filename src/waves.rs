@@ -58,7 +58,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                 if line(&receiver, emitter.position, &collisions) {
                     let dist = norm(&(receiver.position - emitter.position));
                     emitter.transfers[idr].push(SignalEvent {
-                        time: (dist / WAVE_VELOCITY).floor() as u32,
+                        time: (dist / WAVE_VELOCITY).floor() as usize,
                         gain: 1.,
                     });
                 }
@@ -66,14 +66,17 @@ pub fn tracing(world: &mut WorldDescriptor) {
         }
 
         for (ide, idr, time, power) in ro {
-            world.emitters[ide].transfers[idr].push(SignalEvent { time, gain: power });
+            world.emitters[ide].transfers[idr].push(SignalEvent {
+                time: time,
+                gain: power,
+            });
         }
     })
 }
 
 fn process(
     (ide, (ray, energy, dist, max_energy, n)): (usize, EnergyRay),
-    out: &channel::Sender<(usize, usize, u32, f32)>,
+    out: &channel::Sender<(usize, usize, usize, f32)>,
     receivers: &Vec<SignalReceiver>,
     bvs: &BVT<SceneObject, AABB<f32>>,
 ) {
@@ -93,7 +96,7 @@ fn process(
             .map(|(idr, energy, dist)| (ide, idr, energy, dist + dist_plus))
             .filter(|r| r.2 / max_energy < MIN_GAIN)
             .map(|(ide, idr, energy, dist)| {
-                (ide, idr, (dist / WAVE_VELOCITY).floor() as u32, energy)
+                (ide, idr, (dist / WAVE_VELOCITY).floor() as usize, energy)
             }).for_each(|c| out.send(c));
 
         let refraction = next_rays_refraction(&ray, &inter, n, n2).into_par_iter();
