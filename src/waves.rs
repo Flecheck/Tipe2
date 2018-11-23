@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use antennas::{SignalEvent, WorldDescriptor};
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
@@ -24,6 +25,7 @@ const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 const PI: f32 = std::f32::consts::PI;
 const MIN_GAIN: f32 = 0.001;
 const LOST_PER_BOUNCE: f32 = 0.7;
+const N_AIR: f32 = 1.;
 
 /// (Ray,energy,distance,max_energy,n)
 type EnergyRay = (Ray<f32>, f32, f32, f32, f32);
@@ -56,7 +58,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                 if line(&receiver, emitter.position, &collisions) {
                     let dist = norm(&(receiver.position - emitter.position));
                     emitter.transfers[idr].push(SignalEvent {
-                        time: (dist / WAVE_VELOCITY).floor() as u32,
+                        time: (dist / WAVE_VELOCITY).floor() as usize,
                         gain: 1.,
                     });
                 }
@@ -64,14 +66,17 @@ pub fn tracing(world: &mut WorldDescriptor) {
         }
 
         for (ide, idr, time, power) in ro {
-            world.emitters[ide].transfers[idr].push(SignalEvent { time, gain: power });
+            world.emitters[ide].transfers[idr].push(SignalEvent {
+                time: time,
+                gain: power,
+            });
         }
     })
 }
 
 fn process(
     (ide, (ray, energy, dist, max_energy, n)): (usize, EnergyRay),
-    out: &channel::Sender<(usize, usize, u32, f32)>,
+    out: &channel::Sender<(usize, usize, usize, f32)>,
     receivers: &Vec<SignalReceiver>,
     bvs: &BVT<SceneObject, AABB<f32>>,
 ) {
@@ -81,14 +86,17 @@ fn process(
     let mut visitor = ClosestRayTOICostFn::new(&ray);
     if let Some(inter) = bvs.best_first_search(&mut visitor) {
         let dist_plus = norm(&(ray.dir * inter.1.toi)) / n;
-        let n2 = inter.0.n;
+        let mut n2 = inter.0.n;
+        if n2 == n {
+            n2 = N_AIR;
+        }
 
         find_receiver(&ray, energy, &inter, receivers, bvs)
             .into_iter()
             .map(|(idr, energy, dist)| (ide, idr, energy, dist + dist_plus))
             .filter(|r| r.2 / max_energy < MIN_GAIN)
             .map(|(ide, idr, energy, dist)| {
-                (ide, idr, (dist / WAVE_VELOCITY).floor() as u32, energy)
+                (ide, idr, (dist / WAVE_VELOCITY).floor() as usize, energy)
             }).for_each(|c| out.send(c));
 
         let refraction = next_rays_refraction(&ray, &inter, n, n2).into_par_iter();
