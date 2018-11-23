@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use antennas::{SignalEvent, WorldDescriptor};
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
@@ -24,6 +25,7 @@ const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 const PI: f32 = std::f32::consts::PI;
 const MIN_GAIN: f32 = 0.001;
 const LOST_PER_BOUNCE: f32 = 0.7;
+const N_AIR: f32 = 1.;
 
 /// (Ray,energy,distance,max_energy,n)
 type EnergyRay = (Ray<f32>, f32, f32, f32, f32);
@@ -81,7 +83,10 @@ fn process(
     let mut visitor = ClosestRayTOICostFn::new(&ray);
     if let Some(inter) = bvs.best_first_search(&mut visitor) {
         let dist_plus = norm(&(ray.dir * inter.1.toi)) / n;
-        let n2 = inter.0.n;
+        let mut n2 = inter.0.n;
+        if n2 == n {
+            n2 = N_AIR;
+        }
 
         find_receiver(&ray, energy, &inter, receivers, bvs)
             .into_iter()
