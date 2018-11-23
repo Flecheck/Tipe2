@@ -9,18 +9,18 @@ use ncollide3d::query::Ray;
 use ncollide3d::query::RayCast;
 use ncollide3d::query::RayIntersection;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SignalReceiver {
     pub position: Point3<f32>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SignalEvent {
     pub time: usize,
     pub gain: f32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SignalEmitter {
     pub position: Point3<f32>,
     pub max_power: f32,
@@ -43,15 +43,17 @@ pub struct WorldDescriptor {
 pub struct SceneObject {
     geometry: Box<RayCast<f32> + Sync + Send>,
     transform: Isometry<f32>,
+    pub n: f32,
 }
 impl SceneObject {
-    pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>) -> SceneObject
+    pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>, n: f32) -> SceneObject
     where
         G: 'static + Sync + Send + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
     {
         SceneObject {
             geometry,
             transform,
+            n,
         }
     }
     pub fn cast(&self, ray: &Ray<f32>) -> Option<RayIntersection<f32>> {
@@ -78,12 +80,12 @@ impl<'a> BVTCostFn<f32, SceneObject, AABB<f32>> for ClosestRayTOICostFn<'a> {
     }
 }
 
-pub fn create_bvt_tuple<G>(shape: &G, transform: Isometry<f32>) -> (SceneObject, AABB<f32>)
+pub fn create_bvt_tuple<G>(shape: &G, transform: Isometry<f32>, n: f32) -> (SceneObject, AABB<f32>)
 where
     G: 'static + Send + Sync + Clone + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
 {
     (
-        SceneObject::new(Box::new(shape.clone()), transform),
+        SceneObject::new(Box::new(shape.clone()), transform, n),
         aabb(shape, &transform),
     )
 }

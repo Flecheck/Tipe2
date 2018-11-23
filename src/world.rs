@@ -26,7 +26,7 @@ impl World {
         object: T,
         position: Isometry3<f32>,
     ) {
-        self.objects.push(create_bvt_tuple(&object, position));
+        self.objects.push(create_bvt_tuple(&object, position, 1.));
     }
 
     pub fn insert(&mut self, singularity: Singularity) {
@@ -50,7 +50,7 @@ pub fn dummy_world() -> WorldDescriptor {
 
     let pos = Isometry3::new(Vector3::new(0.5, 0.5, 0.5), zero());
     let obstacle = Cuboid::new(Vector3::new(0.5, 0.5, 0.5));
-    let collisions = BVT::new_balanced(vec![create_bvt_tuple(&obstacle, pos)]);
+    let collisions = BVT::new_balanced(vec![create_bvt_tuple(&obstacle, pos, 1.)]);
 
     WorldDescriptor {
         emitters,
