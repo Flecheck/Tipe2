@@ -37,10 +37,8 @@ impl Simulation {
         }
     }
 
-    fn save(&self, path: &str) {
-        let mut antennas: Vec<StoredAntenna> = Vec::new();
-
-        let entity_resolve: HashMap<Entity, u32> = HashMap::new();
+    fn save(&mut self, path: &str) {
+        let mut entity_resolve: HashMap<Entity, u32> = HashMap::new();
         let mut count = 0;
         self.world.exec(
             |(entities, emission, reception): (
@@ -57,6 +55,8 @@ impl Simulation {
             },
         );
 
+        let mut antennas: Vec<StoredAntenna> = (0..count).map(|_| Default::default()).collect();
+
         let emission_store = self.world.read_resource::<ReadStorage<Emission>>();
         let positions = self.world.read_resource::<ReadStorage<AntennaPosition>>();
         for i in 0..count {
@@ -65,12 +65,21 @@ impl Simulation {
                     .get(*e)
                     .expect("Unreachable: entity has no emitter");
                 let mut antenna = StoredAntenna {
-                    position: positions.get(*e).expect("Unreachable: antenna has no position").position,
+                    position: positions
+                        .get(*e)
+                        .expect("Unreachable: antenna has no position")
+                        .position,
                     transfer_matrix: Vec::new(),
                 };
-                for (target, data, _) in emitter.transfer {
-                    antenna.transfer_matrix.push((*k, data));
+                for (target, data, _) in &emitter.transfer {
+                    antenna.transfer_matrix.push((
+                        *entity_resolve
+                            .get(target)
+                            .expect("Unreachable: entity not a receiver"),
+                        data.clone(),
+                    ));
                 }
+                antennas[*k as usize] = antenna;
             }
         }
 
@@ -120,4 +129,13 @@ struct StoredObstacle {
 struct StoredAntenna {
     position: Isometry<f32>,
     transfer_matrix: Vec<(u32, Vec<SignalEvent>)>,
+}
+
+impl Default for StoredAntenna {
+    fn default() -> Self {
+        Self {
+            position: Isometry::new([0.0, 0.0, 0.0].into(), [0.0, 0.0, 0.0].into()),
+            transfer_matrix: Vec::new(),
+        }
+    }
 }
