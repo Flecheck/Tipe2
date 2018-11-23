@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 pub struct Emission {
     current: f32,
     //samples: VecDeque<f32>,
-    transfer: Vec<(Entity, Vec<SignalEvent>, usize)>,
+    pub transfer: Vec<(Entity, Vec<SignalEvent>, usize)>,
 }
 
 impl Component for Emission {
