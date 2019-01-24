@@ -42,7 +42,8 @@ pub fn tracing(world: &mut WorldDescriptor) {
             emit(&x.position)
                 .map(move |ray| (ray, x.max_power, 0.))
                 .map(move |ray| (ide, ray))
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
     rayon::scope(|s| {
         let ref receivers = world.receivers;
@@ -97,7 +98,8 @@ fn process(
             .filter(|r| r.2 / max_energy < MIN_GAIN)
             .map(|(ide, idr, energy, dist)| {
                 (ide, idr, (dist / WAVE_VELOCITY).floor() as usize, energy)
-            }).for_each(|c| out.send(c));
+            })
+            .for_each(|c| out.send(c));
 
         let refraction = next_rays_refraction(&ray, &inter, n, n2).into_par_iter();
         let reflection = next_rays_reflection(&ray, &inter)
@@ -114,7 +116,8 @@ fn process(
                     max_energy,
                     n,
                 )
-            }).map(|x| (ide, x))
+            })
+            .map(|x| (ide, x))
             .for_each(|x| process(x, out, receivers, bvs));
     }
 }
@@ -153,7 +156,8 @@ fn find_receiver(
             let power_percentage = dot(&nvec, &normal);
             let dist = norm(&vec);
             (i, power * power_percentage, dist)
-        }).collect()
+        })
+        .collect()
 }
 
 fn line(receiver: &SignalReceiver, point: Point3<f32>, bvs: &BVT<SceneObject, AABB<f32>>) -> bool {
@@ -184,10 +188,12 @@ fn next_rays_refraction(
     n1: f32,
     n2: f32,
 ) -> Vec<(Ray<f32>, f32)> {
-    let normal = normalize(&inter.1.normal);
-    let normal_l = dot(&normal, &ray.dir) * normal;
-
-    let refraction = normalize(&-(n2 / n1 * (ray.dir - normal_l) + normal_l));
-
-    vec![(Ray::new(ray.origin + ray.dir * inter.1.toi, refraction), n2)]
+    let mut ret = vec![];
+    if n2 / n1 <= 1. {
+        let normal = normalize(&inter.1.normal);
+        let normal_l = dot(&normal, &ray.dir) * normal;
+        let refraction = normalize(&-(n2 / n1 * (ray.dir - normal_l) + normal_l));
+        ret.push((Ray::new(ray.origin + ray.dir * inter.1.toi, refraction), n2));
+    }
+    ret
 }
