@@ -34,6 +34,7 @@ type EnergyRay = (Ray<f32>, f32, f32, f32, f32);
 pub fn tracing(world: &mut WorldDescriptor) {
     let (so, ro) = channel::bounded(10_000);
 
+    // Starting rays
     let rays = world
         .emitters
         .iter()
@@ -48,12 +49,15 @@ pub fn tracing(world: &mut WorldDescriptor) {
     rayon::scope(|s| {
         let ref receivers = world.receivers;
         let ref collisions = world.collisions;
+
+        // Prosessing
         s.spawn(move |s| {
             rays.into_iter()
                 .map(|(ide, (ray, power, dist))| (ide, (ray, power, dist, power, 1.)))
                 .for_each(|x| process(x, &so, receivers, collisions));
         });
 
+        // Direct reach
         for (idr, receiver) in receivers.iter().enumerate() {
             for emitter in world.emitters.iter_mut() {
                 if line(&receiver, emitter.position, &collisions) {
@@ -66,6 +70,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
             }
         }
 
+        // Collecting
         for (ide, idr, time, power) in ro {
             world.emitters[ide].transfers[idr].push(SignalEvent {
                 time: time,
@@ -95,7 +100,7 @@ fn process(
         find_receiver(&ray, energy, &inter, receivers, bvs)
             .into_iter()
             .map(|(idr, energy, dist)| (ide, idr, energy, dist + dist_plus))
-            .filter(|r| r.2 / max_energy < MIN_GAIN)
+            .filter(|r| r.2 / max_energy < MIN_GAIN) // Only reacheble antenas
             .map(|(ide, idr, energy, dist)| {
                 (ide, idr, (dist / WAVE_VELOCITY).floor() as usize, energy)
             })
