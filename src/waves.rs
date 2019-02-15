@@ -184,7 +184,7 @@ fn emit<'a>(pos: &'a Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32
             let y = theta.sin() * phi.sin();
             let z = theta.sin();
             (
-                Ray::new(pos.clone(), Vector3::new(x, y, z)),
+                Ray::new(pos.clone(), normalize(&Vector3::new(x, y, z))),
                 2. * phi * (1. - (theta / 2.).cos()),
             )
         })
@@ -194,7 +194,7 @@ fn emit<'a>(pos: &'a Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32
 fn next_rays_reflection(ray: &Ray<f32>, inter: &(&SceneObject, RayIntersection<f32>)) -> Ray<f32> {
     let normal = normalize(&inter.1.normal);
 
-    let reflection = 2. * dot(&normal, &ray.dir) * normal - ray.dir;
+    let reflection = normalize(&(2. * dot(&normal, &ray.dir) * normal - ray.dir));
 
     Ray::new(ray.origin + ray.dir * inter.1.toi, reflection)
 }
