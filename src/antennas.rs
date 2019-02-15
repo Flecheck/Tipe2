@@ -12,6 +12,7 @@ use ncollide3d::query::RayIntersection;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SignalReceiver {
     pub position: Point3<f32>,
+    pub transfers: Vec<Vec<SignalEvent>>, // indexed by emitter, (time, gain)
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -24,8 +25,6 @@ pub struct SignalEvent {
 pub struct SignalEmitter {
     pub position: Point3<f32>,
     pub max_power: f32,
-
-    pub transfers: Vec<Vec<SignalEvent>>, // indexed by receiver, (time, gain)
 }
 
 #[derive(Serialize, Deserialize)]

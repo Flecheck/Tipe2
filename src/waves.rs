@@ -12,7 +12,7 @@ use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::partitioning::BVT;
 
 use antennas::ClosestRayTOICostFn;
-use antennas::{SceneObject, SignalEmitter, SignalReceiver};
+use antennas::SceneObject;
 use ncollide3d::query::RayIntersection;
 
 use rand;
@@ -47,21 +47,18 @@ struct Output {
 pub fn tracing(world: &mut WorldDescriptor) {
     let (so, ro) = channel::bounded(10_000);
 
-    // Starting rays
-    let rays = (&world.emitters.into_par_iter())
-        .enumerate()
-        .flat_map(|(ide, x)| {
-            emit(&x.position)
+    rayon::scope(|s| {
+        let ref collisions = world.collisions;
+        let ref emitters = world.emitters;
+
+        // Starting rays
+        let rays = emitters.into_par_iter().enumerate().flat_map(|(ide, x)| {
+            emit((x.position).clone())
                 .map(move |ray| (ray.0, x.max_power * ray.1, 0.))
                 .map(move |ray| (ide, ray))
         });
-
-    rayon::scope(|s| {
-        let ref receivers = world.receivers;
-        let ref collisions = world.collisions;
-
         // Prosessing
-        s.spawn(move |s| {
+        s.spawn(move |_s| {
             rays.map(|(ide, (ray, energy, distance))| {
                 (
                     ide,
@@ -74,12 +71,12 @@ pub fn tracing(world: &mut WorldDescriptor) {
                     },
                 )
             })
-            .for_each(|x| process(x, &so, receivers, collisions));
+            .for_each(|x| process(x, &so, collisions));
         });
 
         // Collecting
         for out in ro {
-            world.emitters[out.ide].transfers[out.idr].push(SignalEvent {
+            world.receivers[out.idr].transfers[out.ide].push(SignalEvent {
                 time: out.time,
                 gain: out.energy,
             });
@@ -91,7 +88,6 @@ pub fn tracing(world: &mut WorldDescriptor) {
 fn process(
     (ide, energyray): (usize, EnergyRay),
     out: &channel::Sender<Output>,
-    receivers: &Vec<SignalReceiver>,
     bvs: &BVT<SceneObject, AABB<f32>>,
 ) {
     if energyray.energy / energyray.max_energy < MIN_GAIN {
@@ -169,13 +165,13 @@ fn process(
 
             let nextrays =
                 nextrays.expect("WTFFFFFFFFFFFFFFFFFFF pas de reflection ou de refraction");
-            process((ide, nextrays), out, receivers, bvs);
+            process((ide, nextrays), out, bvs);
         }
     }
 }
 
 // TODO: Check every ray is normalized
-fn emit<'a>(pos: &'a Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> + 'a {
+fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
     (0..NB_SAMPLE).into_par_iter().flat_map(move |alpha| {
         (0..NB_SAMPLE).into_par_iter().map(move |beta| {
             let phi = alpha as f32 * 2f32 * PI / NB_SAMPLEF;
