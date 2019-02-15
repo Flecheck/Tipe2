@@ -37,6 +37,7 @@ pub struct SerializableWorld {
 pub struct WorldDescriptor {
     pub emitters: Vec<SignalEmitter>,
     pub receivers: Vec<SignalReceiver>,
+    pub names: Vec<String>,
     pub collisions: BVT<SceneObject, AABB<f32>>,
 }
 
@@ -45,6 +46,7 @@ pub struct SceneObject {
     transform: Isometry<f32>,
     pub n: f32,
 }
+
 impl SceneObject {
     pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>, n: f32) -> SceneObject
     where
@@ -56,6 +58,7 @@ impl SceneObject {
             n,
         }
     }
+
     pub fn cast(&self, ray: &Ray<f32>) -> Option<RayIntersection<f32>> {
         self.geometry
             .toi_and_normal_with_ray(&self.transform, ray, false)
@@ -65,11 +68,13 @@ impl SceneObject {
 pub struct ClosestRayTOICostFn<'a> {
     ray: &'a Ray<f32>,
 }
+
 impl<'a> ClosestRayTOICostFn<'a> {
     pub fn new(ray: &'a Ray<f32>) -> ClosestRayTOICostFn<'a> {
         ClosestRayTOICostFn { ray }
     }
 }
+
 impl<'a> BVTCostFn<f32, SceneObject, AABB<f32>> for ClosestRayTOICostFn<'a> {
     type UserData = RayIntersection<f32>;
     fn compute_bv_cost(&mut self, bv: &AABB<f32>) -> Option<f32> {

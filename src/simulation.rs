@@ -4,7 +4,7 @@ use ncollide3d::math::Isometry;
 use ncollide3d::partitioning::BVT;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::thread;
 use CHANNEL_BOUND;
 
@@ -12,7 +12,10 @@ use antennas::{SceneObject, SerializableWorld, SignalEvent, SignalReceiver, Worl
 use systems::propagation::{Emission, PropagationSystem, Reception};
 use systems::AntennaPosition;
 
-use specs::{DispatcherBuilder, Entities, Entity, Join, ReadStorage, World};
+use specs::{
+    Component, DispatcherBuilder, Entities, Entity, Join, ReadStorage, VecStorage, World,
+    WriteStorage,
+};
 
 use ron::ser::PrettyConfig;
 
@@ -93,12 +96,44 @@ impl Simulation {
         std::fs::write(path, data);
     }
 
-    fn load(&mut self) {
+    fn load(&mut self, path: &str) {
+        let sim: StoredSimulation = ron::de::from_reader(std::io::BufReader::new(
+            std::fs::File::open(path).expect("Could not open simulation file"),
+        ))
+        .expect("Could not deserialize simulation");
+
         unimplemented!()
     }
 
-    fn solve(&mut self) {
-        unimplemented!()
+    fn solve(&mut self, mut world: WorldDescriptor) {
+        crate::waves::tracing(&mut world);
+
+        let mut entities = Vec::with_capacity(world.names.len());
+        for i in 0..world.names.len() {
+            use specs::Builder;
+            let antenna = self
+                .world
+                .create_entity()
+                .with(Name {
+                    name: world.names[i].clone(),
+                })
+                .with(Reception::new())
+                .build();
+            entities.push(antenna);
+        }
+
+        self.world.exec(|mut emits: WriteStorage<Emission>| {
+            for i in 0..world.names.len() {
+                let mut transfer = Vec::new();
+                for em in &world.emitters[i].transfers {
+                    transfer.push()
+                }
+                emits.insert(entities[i], Emission {
+                    current: 0.0,
+                    transfer,
+                }).expect("Unreachable: failed to insert Emission");
+            }
+        });
     }
 
     fn start(&mut self) {
@@ -138,4 +173,12 @@ impl Default for StoredAntenna {
             transfer_matrix: Vec::new(),
         }
     }
+}
+
+struct Name {
+    name: String,
+}
+
+impl Component for Name {
+    type Storage = VecStorage<Name>;
 }
