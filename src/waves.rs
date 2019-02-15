@@ -178,6 +178,7 @@ fn process(
     }
 }
 
+// TODO: Check every ray is normalized
 fn emit<'a>(pos: &'a Point3<f32>) -> impl Iterator<Item = (Ray<f32>, f32)> + 'a {
     (0..NB_SAMPLE).flat_map(move |alpha| {
         (0..NB_SAMPLE).map(move |beta| {
