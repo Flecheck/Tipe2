@@ -129,7 +129,7 @@ fn process(
         let cos2 = (1. - (n1 / n2) * (n1 / n2) * (1. - cos1 * cos1).sqrt()).sqrt();
 
         let rtm = (n1 * cos2 - n2 * cos1) / (n1 * cos2 + n2 * cos1);
-        let ttm = 2. * n1 * cos1 / (n1 * cos2 + n2 * cos1);
+        let ttm = 1. - rtm;
 
         let mut nextrays = Vec::new();
 
