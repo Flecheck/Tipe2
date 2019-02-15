@@ -1,5 +1,3 @@
-#![feature(nll)]
-
 extern crate clap;
 extern crate crossbeam_channel;
 extern crate crossbeam_deque;
