@@ -44,6 +44,7 @@ pub struct SceneObject {
     geometry: Box<RayCast<f32> + Sync + Send>,
     transform: Isometry<f32>,
     pub n: f32,
+    pub receiver: Option<usize>,
 }
 impl SceneObject {
     pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>, n: f32) -> SceneObject
@@ -54,6 +55,7 @@ impl SceneObject {
             geometry,
             transform,
             n,
+            receiver: None,
         }
     }
     pub fn cast(&self, ray: &Ray<f32>) -> Option<RayIntersection<f32>> {
