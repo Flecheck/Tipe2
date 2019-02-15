@@ -45,6 +45,7 @@ pub struct SceneObject {
     geometry: Box<RayCast<f32> + Sync + Send>,
     transform: Isometry<f32>,
     pub n: f32,
+    pub receiver: Option<usize>,
 }
 
 impl SceneObject {
@@ -56,6 +57,7 @@ impl SceneObject {
             geometry,
             transform,
             n,
+            receiver: None,
         }
     }
 
