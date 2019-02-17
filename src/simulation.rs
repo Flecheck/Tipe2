@@ -60,13 +60,13 @@ impl Simulation {
 
         let mut antennas: Vec<StoredAntenna> = (0..count).map(|_| Default::default()).collect();
 
-        let emission_store = self.world.read_resource::<ReadStorage<Emission>>();
+        let reception_store = self.world.read_resource::<ReadStorage<Reception>>();
         let positions = self.world.read_resource::<ReadStorage<AntennaPosition>>();
         for i in 0..count {
             for (e, k) in &entity_resolve {
-                let emitter = emission_store
+                let recs = reception_store
                     .get(*e)
-                    .expect("Unreachable: entity has no emitter");
+                    .expect("Unreachable: entity has no reception");
                 let mut antenna = StoredAntenna {
                     position: positions
                         .get(*e)
@@ -74,7 +74,7 @@ impl Simulation {
                         .position,
                     transfer_matrix: Vec::new(),
                 };
-                for (target, data, _) in &emitter.transfer {
+                for (target, data, _) in &recs.transfer {
                     antenna.transfer_matrix.push((
                         *entity_resolve
                             .get(target)
@@ -117,21 +117,27 @@ impl Simulation {
                 .with(Name {
                     name: world.names[i].clone(),
                 })
-                .with(Reception::new())
+                .with(Emission { current: 0.0 })
                 .build();
             entities.push(antenna);
         }
 
-        self.world.exec(|mut emits: WriteStorage<Emission>| {
+        self.world.exec(|mut recs: WriteStorage<Reception>| {
             for i in 0..world.names.len() {
-                let mut transfer = Vec::new();
-                for em in &world.emitters[i].transfers {
-                    transfer.push()
+                let mut transfer = Vec::with_capacity(world.receivers[i].transfers.len());
+                for k in 0..world.receivers[i].transfers.len() {
+                    transfer.push((
+                        entities[k],
+                        world.receivers[i].transfers[k].clone(),
+                        world.receivers[i].transfers[k]
+                            .iter()
+                            .map(|x| x.time)
+                            .max()
+                            .unwrap_or(0),
+                    ));
                 }
-                emits.insert(entities[i], Emission {
-                    current: 0.0,
-                    transfer,
-                }).expect("Unreachable: failed to insert Emission");
+                recs.insert(entities[i], Reception::new(transfer))
+                    .expect("Unreachable: failed to insert Reception");
             }
         });
     }
