@@ -136,7 +136,7 @@ fn process(
                 let cos1 = norm(&(dot(&normal, &energyray.ray.dir) * normal - energyray.ray.dir));
                 let cos2 = (1. - (n1 / n2) * (n1 / n2) * (1. - cos1 * cos1).sqrt()).sqrt();
 
-                let rtm = (n1 * cos2 - n2 * cos1) / (n1 * cos2 + n2 * cos1);
+                let rtm = ((n1 * cos2 - n2 * cos1) / (n1 * cos2 + n2 * cos1)).abs();
 
                 if rand < rtm {
                     // Reflection
@@ -170,7 +170,6 @@ fn process(
     }
 }
 
-// TODO: Check every ray is normalized
 fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
     (0..NB_SAMPLE).into_par_iter().flat_map(move |alpha| {
         (0..NB_SAMPLE).into_par_iter().map(move |beta| {
