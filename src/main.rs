@@ -10,6 +10,9 @@ extern crate serde_derive;
 extern crate rand;
 extern crate ron;
 extern crate specs;
+#[macro_use]
+extern crate lazy_static;
+
 
 use clap::{App, SubCommand};
 
