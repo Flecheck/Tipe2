@@ -11,6 +11,9 @@ extern crate rand;
 extern crate ron;
 extern crate specs;
 extern crate byteorder;
+#[macro_use]
+extern crate lazy_static;
+
 
 use clap::{App, SubCommand};
 
