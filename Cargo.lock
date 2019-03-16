@@ -677,6 +677,7 @@ dependencies = [
 name = "tipe2"
 version = "0.1.0"
 dependencies = [
+ "byteorder 1.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam-channel 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam-deque 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",

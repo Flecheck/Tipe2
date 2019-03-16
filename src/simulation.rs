@@ -9,7 +9,7 @@ use std::thread;
 use CHANNEL_BOUND;
 
 use antennas::{SceneObject, SerializableWorld, SignalEvent, SignalReceiver, WorldDescriptor};
-use systems::propagation::{Emission, PropagationSystem, Reception};
+use systems::{propagation::{Emission, PropagationSystem, Reception}, tracker::TrackerSystem, simple_wave::{SimpleWaveEmitter, SimpleWave}};
 use systems::AntennaPosition;
 
 use specs::{
@@ -27,20 +27,20 @@ fn ron_pretty() -> PrettyConfig {
     }
 }
 
-struct Simulation {
+pub struct Simulation {
     world: World,
     obstacles: Vec<StoredObstacle>,
 }
 
 impl Simulation {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             world: World::new(),
             obstacles: Vec::new(),
         }
     }
 
-    fn save(&mut self, path: &str) {
+    pub fn save(&mut self, path: &str) {
         let mut entity_resolve: HashMap<Entity, u32> = HashMap::new();
         let mut count = 0;
         self.world.exec(
@@ -96,7 +96,7 @@ impl Simulation {
         std::fs::write(path, data);
     }
 
-    fn load(&mut self, path: &str) {
+    pub fn load(&mut self, path: &str) {
         let sim: StoredSimulation = ron::de::from_reader(std::io::BufReader::new(
             std::fs::File::open(path).expect("Could not open simulation file"),
         ))
@@ -105,8 +105,13 @@ impl Simulation {
         unimplemented!()
     }
 
-    fn solve(&mut self, mut world: WorldDescriptor) {
+    pub fn solve(&mut self, mut world: WorldDescriptor) {
         crate::waves::tracing(&mut world);
+
+        self.world.register::<Reception>();
+        self.world.register::<Emission>();
+        self.world.register::<Name>();
+        self.world.register::<SimpleWaveEmitter>();
 
         let mut entities = Vec::with_capacity(world.names.len());
         for i in 0..world.names.len() {
@@ -118,6 +123,7 @@ impl Simulation {
                     name: world.names[i].clone(),
                 })
                 .with(Emission { current: 0.0 })
+                .with(SimpleWaveEmitter::default())
                 .build();
             entities.push(antenna);
         }
@@ -135,19 +141,24 @@ impl Simulation {
                             .max()
                             .unwrap_or(0),
                     ));
+                    println!("{:?}", world.receivers[i].transfers[k]);
                 }
-                recs.insert(entities[i], Reception::new(transfer))
+                recs.insert(entities[i], Reception::new(transfer, world.names[i].clone()))
                     .expect("Unreachable: failed to insert Reception");
             }
         });
     }
 
-    fn start(&mut self) {
+    pub fn start(&mut self, names: Vec<String>) {        
         let mut dispatcher = DispatcherBuilder::new()
+            .with(SimpleWave, "simple_wave", &[])
             .with(PropagationSystem, "propagation_system", &[])
+            .with(TrackerSystem::new(names), "tracker_system", &[])
             .build();
 
-        loop {
+        println!("Disptaching!");
+
+        for _ in 0..1000 {
             dispatcher.dispatch(&mut self.world.res);
         }
     }

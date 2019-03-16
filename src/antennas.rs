@@ -9,25 +9,25 @@ use ncollide3d::query::Ray;
 use ncollide3d::query::RayCast;
 use ncollide3d::query::RayIntersection;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalReceiver {
     pub position: Point3<f32>,
     pub transfers: Vec<Vec<SignalEvent>>, // indexed by emitter, (time, gain)
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalEvent {
     pub time: usize,
     pub gain: f32,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalEmitter {
     pub position: Point3<f32>,
     pub max_power: f32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SerializableWorld {
     pub emitters: Vec<SignalEmitter>,
     pub receivers: Vec<SignalReceiver>,

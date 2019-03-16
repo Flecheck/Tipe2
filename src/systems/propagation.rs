@@ -14,14 +14,16 @@ pub struct Reception {
     pub current: f32,
     receive_buffer: VecDeque<f32>,
     pub transfer: Vec<(Entity, Vec<SignalEvent>, usize)>,
+    pub label: String,
 }
 
 impl Reception {
-    pub fn new(transfer: Vec<(Entity, Vec<SignalEvent>, usize)>) -> Self {
+    pub fn new(transfer: Vec<(Entity, Vec<SignalEvent>, usize)>, name: impl ToString) -> Self {
         Self {
             current: 0.0,
             receive_buffer: VecDeque::new(),
             transfer,
+            label: name.to_string(),
         }
     }
 }
@@ -36,6 +38,7 @@ impl<'a> System<'a> for PropagationSystem {
     type SystemData = (ReadStorage<'a, Emission>, WriteStorage<'a, Reception>);
 
     fn run(&mut self, (emission, mut reception): Self::SystemData) {
+        println!("propa");
         use specs::ParJoin;
         use rayon::prelude::ParallelIterator;
         (&mut reception,).par_join().for_each(|(rec,)| {
@@ -53,6 +56,8 @@ impl<'a> System<'a> for PropagationSystem {
                     }
                 }
             }
+
+            println!("hi!");
 
             rec.current = rec
                 .receive_buffer

@@ -10,16 +10,19 @@ extern crate serde_derive;
 extern crate rand;
 extern crate ron;
 extern crate specs;
+extern crate byteorder;
 
 use clap::{App, SubCommand};
 
 mod antennas;
-mod constants;
 mod simulation;
 mod systems;
 mod transfer;
 mod waves;
 mod world;
+
+use ncollide3d::partitioning::BVT;
+use nalgebra::Point3;
 
 pub type Float = f32;
 
@@ -30,19 +33,31 @@ pub const TIME_PER_BEAT: Float = 1. / MAX_FREQUENCY; // seconds
 pub const CHANNEL_BOUND: usize = 65536;
 
 fn main() {
-    let matches = App::new("Tipe2")
-        .version("1.0")
-        .author(
-            "Théo Degioanni <moxinilian@tutanota.com> & Mathieu Bessou <bessou.mathieu@gmail.com>",
-        )
-        .subcommand(SubCommand::with_name("transfer").about("Builds transfer functions"))
-        .subcommand(SubCommand::with_name("simulate").about("Runs the simulation"))
-        .subcommand(SubCommand::with_name("view").about("Opens the 3D view"))
-        .get_matches();
+    let mut sim = simulation::Simulation::new();
 
-    if let Some(_) = matches.subcommand_matches("transfer") {
-        transfer::transfer();
-    } else {
-        println!("Unimplemented yet.\nUse 'help' for help.");
-    }
+    let description = antennas::WorldDescriptor {
+        emitters: vec![antennas::SignalEmitter {
+            position: Point3::new(-1.0, 0.0, 0.0),
+            max_power: 1.0,
+        }, antennas::SignalEmitter {
+            position: Point3::new(1.0, 0.0, 0.0),
+            max_power: 1.0,
+        }],
+        receivers: vec![ antennas::SignalReceiver {
+            position: Point3::new(-1.0, 0.0, 0.0),
+            transfers: vec![vec![], vec![]],
+        }, antennas::SignalReceiver {
+            position: Point3::new(1.0, 0.0, 0.0),
+            transfers: vec![vec![], vec![]],
+        }
+        ],
+        names: vec!["first".into(), "second".into()],
+        collisions: BVT::new_balanced(vec![]),
+    };
+
+    println!("Solving...");
+    sim.solve(description);
+    println!("Running...");
+    sim.start(vec!["first".into(), "second".into()]);
+    println!("Done my dudes!");
 }

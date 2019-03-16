@@ -3,6 +3,7 @@ use specs::{Component, VecStorage};
 
 pub mod propagation;
 pub mod simple_wave;
+pub mod tracker;
 
 pub struct AntennaPosition {
     pub position: Isometry<f32>,
