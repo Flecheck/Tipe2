@@ -91,7 +91,17 @@ where
     G: 'static + Send + Sync + Clone + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
 {
     (
-        SceneObject::new(Box::new(shape.clone()), transform, n),
+        SceneObject::new(Box::new(shape.clone()), transform, n,None),
+        aabb(shape, &transform),
+    )
+}
+
+pub fn create_bvt_tuple_receiver<G>(shape: &G, transform: Isometry<f32>,receiver: usize) -> (SceneObject, AABB<f32>)
+where
+    G: 'static + Send + Sync + Clone + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
+{
+    (
+        SceneObject::new(Box::new(shape.clone()), transform, 1.,Some(receiver)),
         aabb(shape, &transform),
     )
 }

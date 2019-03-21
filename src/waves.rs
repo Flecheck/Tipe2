@@ -19,7 +19,13 @@ use rand;
 
 use nalgebra::{dot, norm, normalize};
 
-const NB_SAMPLE: u32 = 10_000;
+use antennas::create_bvt_tuple_receiver;
+use nalgebra::{Isometry3,Translation3};
+use nalgebra::geometry::UnitQuaternion;
+
+use ncollide3d::shape::Ball;
+
+const NB_SAMPLE: u32 = 100;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
@@ -45,10 +51,17 @@ struct Output {
 
 /// Do the ray tracing and populate emetters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
+    let ball = Ball::new(0.5f32);
+    
+    for (i,receiver) in world.receivers.iter().enumerate() {
+        world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.position.x,receiver.position.y,receiver.position.z) ,UnitQuaternion::identity()), i))
+    }
+
+    let collisions = BVT::new_balanced(world.collisions);
+
     let (so, ro) = channel::bounded(10_000);
 
     rayon::scope(|s| {
-        let ref collisions = world.collisions;
         let ref emitters = world.emitters;
 
         // Starting rays
@@ -71,7 +84,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                     },
                 )
             })
-            .for_each(|x| process(x, &so, collisions));
+            .for_each(|x| process(x, &so, &collisions));
         });
 
         // Collecting
