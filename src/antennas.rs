@@ -48,7 +48,7 @@ pub struct SceneObject {
 }
 
 impl SceneObject {
-    pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>, n: f32) -> SceneObject
+    pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>, n: f32, receiver: Option<usize>) -> SceneObject
     where
         G: 'static + Sync + Send + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
     {
@@ -56,7 +56,7 @@ impl SceneObject {
             geometry,
             transform,
             n,
-            receiver: None,
+            receiver: receiver,
         }
     }
 
