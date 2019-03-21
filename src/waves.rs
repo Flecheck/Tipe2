@@ -56,7 +56,7 @@ struct Output {
 pub fn tracing(world: &mut WorldDescriptor) {
     let ball = Ball::new(0.05f32);
     
-    for (i,receiver) in world.receivers.iter().enumerate() {
+    for (i,receiver) in world.receivers.iter().enumerate().filter(|(i,x)|x.isSome()) {
         world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.position.x,receiver.position.y,receiver.position.z) ,UnitQuaternion::identity()), i))
     }
 
@@ -68,7 +68,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
         let ref emitters = world.emitters;
 
         // Starting rays
-        let rays = emitters.into_par_iter().enumerate().flat_map(|(ide, x)| {
+        let rays = emitters.into_par_iter().enumerate().filter(|(i,x)|x.isSome()).flat_map(|(ide, x)| {
             emit((x.position).clone())
                 .map(move |ray| (ray.0, x.max_power * ray.1, 0.))
                 .map(move |ray| (ide, ray))
