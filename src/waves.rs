@@ -55,7 +55,7 @@ struct Output {
 pub fn tracing(world: &mut WorldDescriptor) {
     let ball = Ball::new(0.5f32);
     
-    for (i,receiver) in world.receivers.iter().enumerate() {
+    for (i,receiver) in world.receivers.iter().enumerate().filter(|(i,x)|x.isSome()) {
         world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.position.x,receiver.position.y,receiver.position.z) ,UnitQuaternion::identity()), i))
     }
 
@@ -125,7 +125,7 @@ fn process(
             out.send(Output {
                 ide,
                 idr,
-                time: (energyray.distance + dist_plus / WAVE_VELOCITY).floor() as usize,
+                time: (energyray.distance + dist_plus / WAVE_VELOCITY * ).floor() as usize,
                 energy: energyray.energy,
             })
         } else {
