@@ -34,8 +34,8 @@ pub struct SerializableWorld {
 }
 
 pub struct WorldDescriptor {
-    pub emitters: Vec<SignalEmitter>,
-    pub receivers: Vec<SignalReceiver>,
+    pub emitters: Vec<Option<SignalEmitter>>,
+    pub receivers: Vec<Option<SignalReceiver>>,
     pub names: Vec<String>,
     pub collisions: Vec<(SceneObject, AABB<f32>)>,
 }   

@@ -39,20 +39,14 @@ fn main() {
     let mut sim = simulation::Simulation::new();
 
     let description = antennas::WorldDescriptor {
-        emitters: vec![antennas::SignalEmitter {
-            position: Point3::new(-1.0, 0.0, 0.0),
-            max_power: 1.0,
-        }, antennas::SignalEmitter {
+        emitters: vec![None, Some(antennas::SignalEmitter {
             position: Point3::new(1.0, 0.0, 0.0),
             max_power: 1.0,
-        }],
-        receivers: vec![ antennas::SignalReceiver {
+        })],
+        receivers: vec![ Some(antennas::SignalReceiver {
             position: Point3::new(-1.0, 0.0, 0.0),
             transfers: vec![vec![], vec![]],
-        }, antennas::SignalReceiver {
-            position: Point3::new(1.0, 0.0, 0.0),
-            transfers: vec![vec![], vec![]],
-        }
+        }), None
         ],
         names: vec!["first".into(), "second".into()],
         collisions: vec![],

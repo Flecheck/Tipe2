@@ -130,18 +130,17 @@ impl Simulation {
 
         self.world.exec(|mut recs: WriteStorage<Reception>| {
             for i in 0..world.names.len() {
-                let mut transfer = Vec::with_capacity(world.receivers[i].transfers.len());
-                for k in 0..world.receivers[i].transfers.len() {
+                let mut transfer = Vec::with_capacity(world.receivers[i].expect("Unreachable ID 0000").transfers.len());
+                for k in 0..world.receivers[i].expect("Unreachable ID 0001").transfers.len() {
                     transfer.push((
                         entities[k],
-                        world.receivers[i].transfers[k].clone(),
-                        world.receivers[i].transfers[k]
+                        world.receivers[i].expect("Unreachable ID 0002").transfers[k].clone(),
+                        world.receivers[i].expect("Unreachable ID 0003").transfers[k]
                             .iter()
                             .map(|x| x.time)
                             .max()
                             .unwrap_or(0),
                     ));
-                    println!("{:?}", world.receivers[i].transfers[k]);
                 }
                 recs.insert(entities[i], Reception::new(transfer, world.names[i].clone()))
                     .expect("Unreachable: failed to insert Reception");

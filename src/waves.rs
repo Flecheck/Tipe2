@@ -7,6 +7,7 @@ use rayon;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use std;
 use WAVE_VELOCITY;
+use TIME_PER_BEAT;
 
 use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::partitioning::BVT;
@@ -27,7 +28,7 @@ use ncollide3d::shape::Ball;
 
 use std::mem;
 
-const NB_SAMPLE: u32 = 100;
+const NB_SAMPLE: u32 = 10;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
@@ -53,7 +54,7 @@ struct Output {
 
 /// Do the ray tracing and populate emetters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
-    let ball = Ball::new(0.5f32);
+    let ball = Ball::new(0.05f32);
     
     for (i,receiver) in world.receivers.iter().enumerate() {
         world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.position.x,receiver.position.y,receiver.position.z) ,UnitQuaternion::identity()), i))
@@ -122,10 +123,11 @@ fn process(
         let rand: f32 = rand::random();
 
         if let Some(idr) = inter.0.receiver {
+            println!("dist_plus: {}", dist_plus);
             out.send(Output {
                 ide,
                 idr,
-                time: (energyray.distance + dist_plus / WAVE_VELOCITY).floor() as usize,
+                time: (energyray.distance + dist_plus / (WAVE_VELOCITY * TIME_PER_BEAT)).floor() as usize,
                 energy: energyray.energy,
             })
         } else {

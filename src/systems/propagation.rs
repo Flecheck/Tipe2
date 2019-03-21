@@ -49,10 +49,11 @@ impl<'a> System<'a> for PropagationSystem {
                         rec.receive_buffer.resize(*max_time, 0.0);
                     }
                     
-                    for e in events.into_iter() {
+                    for (i,e) in events.into_iter().enumerate() {
+                        println!("{}", i);
                         *rec.receive_buffer
                             .get_mut(e.time)
-                            .expect("Unreachable: sample not allocated") += emit.current * e.gain;
+                            .unwrap_or_else(|| panic!("Unreachable: sample not allocated, max_time: {}", max_time)) += emit.current * e.gain;
                     }
                 }
             }
