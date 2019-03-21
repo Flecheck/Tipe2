@@ -55,7 +55,7 @@ fn main() {
         }
         ],
         names: vec!["first".into(), "second".into()],
-        collisions: BVT::new(),
+        collisions: vec![],
     };
 
     println!("Solving...");
