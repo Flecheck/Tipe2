@@ -13,7 +13,7 @@ extern crate specs;
 extern crate byteorder;
 #[macro_use]
 extern crate lazy_static;
-
+extern crate chrono;
 
 use clap::{App, SubCommand};
 
@@ -59,8 +59,10 @@ fn main() {
     };
 
     println!("Solving...");
-    sim.solve(description);
+    let time = chrono::Duration::span(|| sim.solve(description));
+    println!("Solved in {} seconds", time.num_seconds());
     println!("Running...");
-    sim.start(vec!["first".into(), "second".into()]);
+    let time = chrono::Duration::span(|| sim.start(vec!["first".into(), "second".into()]));
+    println!("Ran in {} seconds", time.num_seconds());
     println!("Done my dudes!");
 }

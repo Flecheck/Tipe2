@@ -19,7 +19,7 @@ use rand;
 
 use nalgebra::{dot, norm, normalize};
 
-const NB_SAMPLE: u32 = 100;
+const NB_SAMPLE: u32 = 10_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;

@@ -57,12 +57,10 @@ impl<'a> System<'a> for PropagationSystem {
                 }
             }
 
-            println!("hi!");
-
             rec.current = rec
                 .receive_buffer
                 .pop_front()
-                .expect("Unreachable: receive_buffer empty");
+                .expect("Isolated antenna");
         });
     }
 }
