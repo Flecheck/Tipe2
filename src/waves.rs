@@ -25,6 +25,8 @@ use nalgebra::geometry::UnitQuaternion;
 
 use ncollide3d::shape::Ball;
 
+use std::mem;
+
 const NB_SAMPLE: u32 = 100;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
@@ -57,7 +59,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
         world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.position.x,receiver.position.y,receiver.position.z) ,UnitQuaternion::identity()), i))
     }
 
-    let collisions = BVT::new_balanced(world.collisions);
+    let collisions = BVT::new_balanced(mem::replace(&mut world.collisions, vec![]));
 
     let (so, ro) = channel::bounded(10_000);
 

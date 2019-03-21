@@ -37,8 +37,8 @@ pub struct WorldDescriptor {
     pub emitters: Vec<SignalEmitter>,
     pub receivers: Vec<SignalReceiver>,
     pub names: Vec<String>,
-    pub collisions: Vec<(Box<SceneObject>, Box<AABB<f32>>)>,
-}
+    pub collisions: Vec<(SceneObject, AABB<f32>)>,
+}   
 
 pub struct SceneObject {
     geometry: Box<RayCast<f32> + Sync + Send>,
