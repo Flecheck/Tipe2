@@ -32,6 +32,12 @@ pub struct Simulation {
     obstacles: Vec<StoredObstacle>,
 }
 
+#[derive(PartialEq, Eq)]
+pub enum AntennaKind {
+    Emit,
+    Rece,
+}
+
 impl Simulation {
     pub fn new() -> Self {
         Self {
@@ -108,42 +114,60 @@ impl Simulation {
     pub fn solve(&mut self, mut world: WorldDescriptor) {
         crate::waves::tracing(&mut world);
 
+        println!("On est contents");
+
         self.world.register::<Reception>();
         self.world.register::<Emission>();
         self.world.register::<Name>();
         self.world.register::<SimpleWaveEmitter>();
 
-        let mut entities = Vec::with_capacity(world.names.len());
+        let mut entities: Vec<(AntennaKind, Entity)> = Vec::with_capacity(world.names.len());
         for i in 0..world.names.len() {
             use specs::Builder;
-            let antenna = self
-                .world
-                .create_entity()
-                .with(Name {
-                    name: world.names[i].clone(),
-                })
-                .with(Emission { current: 0.0 })
-                .with(SimpleWaveEmitter::default())
-                .build();
-            entities.push(antenna);
+            if world.emitters[i].is_some() {
+                let antenna = self
+                    .world
+                    .create_entity()
+                    .with(Name {
+                        name: world.names[i].clone(),
+                    })
+                    .with(Emission { current: 0.0 })
+                    .with(SimpleWaveEmitter::new(1000000000.0))
+                    .build();
+                entities.push((AntennaKind::Emit, antenna));
+            } else {
+                let antenna = self
+                    .world
+                    .create_entity()
+                    .with(Name {
+                        name: world.names[i].clone(),
+                    })
+                    .build();
+                entities.push((AntennaKind::Rece, antenna));
+            }
         }
 
         self.world.exec(|mut recs: WriteStorage<Reception>| {
             for i in 0..world.names.len() {
-                let mut transfer = Vec::with_capacity(world.receivers[i].expect("Unreachable ID 0000").transfers.len());
-                for k in 0..world.receivers[i].expect("Unreachable ID 0001").transfers.len() {
-                    transfer.push((
-                        entities[k],
-                        world.receivers[i].expect("Unreachable ID 0002").transfers[k].clone(),
-                        world.receivers[i].expect("Unreachable ID 0003").transfers[k]
-                            .iter()
-                            .map(|x| x.time)
-                            .max()
-                            .unwrap_or(0),
-                    ));
+                if let Some(ref rec) = world.receivers[i] {
+                    let mut transfer = Vec::with_capacity(rec.transfers.len());
+                    for k in 0..rec.transfers.len() {
+                        if entities[k].0 == AntennaKind::Emit {
+                            transfer.push((
+                                entities[k].1,
+                                rec.transfers[k].clone(),
+                                rec.transfers[k]
+                                    .iter()
+                                    .map(|x| x.time)
+                                    .max()
+                                    .map(|x| x + 1)
+                                    .unwrap_or(0),
+                            ));
+                        }
+                    }
+                    recs.insert(entities[i].1, Reception::new(transfer, world.names[i].clone()))
+                        .expect("Unreachable: failed to insert Reception");
                 }
-                recs.insert(entities[i], Reception::new(transfer, world.names[i].clone()))
-                    .expect("Unreachable: failed to insert Reception");
             }
         });
     }
@@ -155,9 +179,9 @@ impl Simulation {
             .with(TrackerSystem::new(names), "tracker_system", &[])
             .build();
 
-        println!("Disptaching!");
+        println!("Dispatching!");
 
-        for _ in 0..1000 {
+        for _ in 0..0x4000 {
             dispatcher.dispatch(&mut self.world.res);
         }
     }

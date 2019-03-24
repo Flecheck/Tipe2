@@ -25,10 +25,11 @@ impl<'a> System<'a> for TrackerSystem {
     type SystemData = ReadStorage<'a, Reception>;
 
     fn run(&mut self, recs: Self::SystemData) {
-        println!("tracker");
+        //println!("tracker");
         for rec in recs.join() {
-            self.files.get(&rec.label).expect("Name not found").write_f32::<LittleEndian>(rec.current);
+            let mut file = self.files.get(&rec.label).expect("Name not found");
+            file.write_f32::<LittleEndian>(rec.current);
         }
-        println!("tracker done");
+        //println!("tracker done");
     }
 }

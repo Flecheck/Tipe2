@@ -38,7 +38,7 @@ impl<'a> System<'a> for PropagationSystem {
     type SystemData = (ReadStorage<'a, Emission>, WriteStorage<'a, Reception>);
 
     fn run(&mut self, (emission, mut reception): Self::SystemData) {
-        println!("propa");
+        //println!("propa");
         use specs::ParJoin;
         use rayon::prelude::ParallelIterator;
         (&mut reception,).par_join().for_each(|(rec,)| {
@@ -49,8 +49,7 @@ impl<'a> System<'a> for PropagationSystem {
                         rec.receive_buffer.resize(*max_time, 0.0);
                     }
                     
-                    for (i,e) in events.into_iter().enumerate() {
-                        println!("{}", i);
+                    for e in events.into_iter() {
                         *rec.receive_buffer
                             .get_mut(e.time)
                             .unwrap_or_else(|| panic!("Unreachable: sample not allocated, max_time: {}", max_time)) += emit.current * e.gain;
@@ -58,6 +57,7 @@ impl<'a> System<'a> for PropagationSystem {
                 }
             }
 
+            //println!("{:?}", rec.receive_buffer);
             rec.current = rec
                 .receive_buffer
                 .pop_front()

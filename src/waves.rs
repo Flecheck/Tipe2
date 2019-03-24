@@ -28,7 +28,7 @@ use ncollide3d::shape::Ball;
 
 use std::mem;
 
-const NB_SAMPLE: u32 = 10;
+const NB_SAMPLE: u32 = 10_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
@@ -54,10 +54,10 @@ struct Output {
 
 /// Do the ray tracing and populate emetters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
-    let ball = Ball::new(0.05f32);
+    let ball = Ball::new(2.0f32);
     
-    for (i,receiver) in world.receivers.iter().enumerate().filter(|(i,x)|x.isSome()) {
-        world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.position.x,receiver.position.y,receiver.position.z) ,UnitQuaternion::identity()), i))
+    for (i,receiver) in world.receivers.iter().enumerate().filter(|(i,x)|x.is_some()) {
+        world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.as_ref().unwrap().position.x,receiver.as_ref().unwrap().position.y,receiver.as_ref().unwrap().position.z) ,UnitQuaternion::identity()), i))
     }
 
     let collisions = BVT::new_balanced(mem::replace(&mut world.collisions, vec![]));
@@ -68,12 +68,13 @@ pub fn tracing(world: &mut WorldDescriptor) {
         let ref emitters = world.emitters;
 
         // Starting rays
-        let rays = emitters.into_par_iter().enumerate().filter(|(i,x)|x.isSome()).flat_map(|(ide, x)| {
+        let rays = emitters.into_par_iter().enumerate().filter(|(i,x)|x.is_some()).flat_map(|(ide, x)| {
+            let x = x.as_ref().unwrap();
             emit((x.position).clone())
                 .map(move |ray| (ray.0, x.max_power * ray.1, 0.))
                 .map(move |ray| (ide, ray))
         });
-        // Prosessing
+        // Processing
         s.spawn(move |_s| {
             rays.map(|(ide, (ray, energy, distance))| {
                 (
@@ -92,7 +93,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
 
         // Collecting
         for out in ro {
-            world.receivers[out.idr].transfers[out.ide].push(SignalEvent {
+            world.receivers[out.idr].as_mut().unwrap().transfers[out.ide].push(SignalEvent {
                 time: out.time,
                 gain: out.energy,
             });
@@ -123,7 +124,6 @@ fn process(
         let rand: f32 = rand::random();
 
         if let Some(idr) = inter.0.receiver {
-            println!("dist_plus: {}", dist_plus);
             out.send(Output {
                 ide,
                 idr,
@@ -191,10 +191,10 @@ fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
     (0..NB_SAMPLE).into_par_iter().flat_map(move |alpha| {
         (0..NB_SAMPLE).into_par_iter().map(move |beta| {
             let phi = alpha as f32 * 2f32 * PI / NB_SAMPLEF;
-            let theta = beta as f32 * 2f32 * PI / NB_SAMPLEF;
+            let theta = beta as f32 * PI / NB_SAMPLEF;
             let x = theta.sin() * phi.cos();
             let y = theta.sin() * phi.sin();
-            let z = theta.sin();
+            let z = theta.cos();
             (
                 Ray::new(pos.clone(), normalize(&Vector3::new(x, y, z))),
                 2. * phi * (1. - (theta / 2.).cos()),

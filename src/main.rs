@@ -40,11 +40,11 @@ fn main() {
 
     let description = antennas::WorldDescriptor {
         emitters: vec![None, Some(antennas::SignalEmitter {
-            position: Point3::new(1.0, 0.0, 0.0),
+            position: Point3::new(4.0, 0.0, 0.0),
             max_power: 1.0,
         })],
         receivers: vec![ Some(antennas::SignalReceiver {
-            position: Point3::new(-1.0, 0.0, 0.0),
+            position: Point3::new(-4.0, 0.0, 0.0),
             transfers: vec![vec![], vec![]],
         }), None
         ],
