@@ -59,9 +59,9 @@ struct Output {
     energy: f32,
 }
 
-/// Do the ray tracing and populate emetters with receivers
+/// Do the ray tracing and populate emitters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
-    let threadpool = ThreadPoolBuilder::new().stack_size(64 * 1024i32.powi(2)).build().unwrap();
+    let threadpool = ThreadPoolBuilder::new().stack_size(64 * 1024usize.pow(2)).build().unwrap();
     let ball = Ball::new(0.5f32);
     
     for (i,receiver) in world.receivers.iter().enumerate().filter_map(|(i,x)|x.as_ref().map(|x|(i,x))) {
