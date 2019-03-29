@@ -83,7 +83,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                         energy,
                         distance,
                         max_energy: energy,
-                        n: 1.,
+                        n: N_AIR,
                     },
                 )
             })
