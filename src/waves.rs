@@ -40,6 +40,7 @@ const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 const PI: f32 = std::f32::consts::PI;
 const MIN_GAIN: f32 = 0.001;
 const LOST_PER_BOUNCE: f32 = 0.7;
+pub const ABSORBANCE_AIR: f32 = 0.1;
 
 /// (Ray,energy,distance,max_energy,n)
 struct EnergyRay {
@@ -105,11 +106,11 @@ pub fn tracing(world: &mut WorldDescriptor) {
     });
 
     for receiver in world.receivers.iter_mut().filter_map(|x|x.as_mut()) {
-        for mut transfers in &mut receiver.transfers {
-            let mut res = HashMap::new();
-            for x in transfers.iter() {
-                *res.entry(x.time).or_default() += x.gain;
-            }
+        for transfers in &mut receiver.transfers {
+            let res = transfers.iter().fold(HashMap::new(),|mut acc,x|{
+                *acc.entry(x.time).or_default() += x.gain;
+                acc
+                });
             *transfers = res.iter().map(|(&time,&gain)|SignalEvent {time,gain}).collect();
         }
     }
@@ -128,8 +129,12 @@ fn process(
     if let Some(inter) = bvs.best_first_search(&mut visitor) {
         let dist_plus = norm(&(energyray.ray.dir * inter.1.toi)) / energyray.n;
         let mut n2 = inter.0.n;
+        let mut energy = energyray.energy;
         if n2 == energyray.n {
             n2 = *RefractiveIndices::air;
+            energy = energy * (-inter.0.absorbance * dist_plus as f32).exp();
+        } else {
+            energy = energy * (-ABSORBANCE_AIR * dist_plus as f32).exp();
         }
         let n1 = energyray.n;
 
@@ -142,7 +147,7 @@ fn process(
                 ide,
                 idr,
                 time: (energyray.distance + dist_plus / (WAVE_VELOCITY * TIME_PER_BEAT)).floor() as usize,
-                energy: energyray.energy,
+                energy: energy,
             })
         } else {
             if n2 / n1 > 1. {
@@ -152,7 +157,7 @@ fn process(
 
                     nextrays = Some(EnergyRay {
                         ray: reflection.translate_by(reflection.dir * 0.001),
-                        energy: energyray.energy,
+                        energy: energy,
                         distance: energyray.distance + dist_plus,
                         max_energy: energyray.max_energy,
                         n: n1,
@@ -176,7 +181,7 @@ fn process(
 
                         nextrays = Some(EnergyRay {
                             ray: reflection.translate_by(reflection.dir * 0.001),
-                            energy: energyray.energy,
+                            energy: energy,
                             distance: energyray.distance + dist_plus,
                             max_energy: energyray.max_energy,
                             n: n1,
@@ -186,7 +191,7 @@ fn process(
                     let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
                     nextrays = Some(EnergyRay {
                         ray: refraction.0.translate_by(refraction.0.dir * 0.001),
-                        energy: energyray.energy,
+                        energy: energy,
                         distance: energyray.distance + dist_plus,
                         max_energy: energyray.max_energy,
                         n: n2,

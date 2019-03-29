@@ -9,6 +9,8 @@ use ncollide3d::query::Ray;
 use ncollide3d::query::RayCast;
 use ncollide3d::query::RayIntersection;
 
+use waves::ABSORBANCE_AIR;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalReceiver {
     pub position: Point3<f32>,
@@ -44,6 +46,7 @@ pub struct SceneObject {
     geometry: Box<RayCast<f32> + Sync + Send>,
     transform: Isometry<f32>,
     pub n: f32,
+    pub absorbance: f32,
     pub receiver: Option<usize>,
 }
 
@@ -56,6 +59,7 @@ impl SceneObject {
             geometry,
             transform,
             n,
+            absorbance:ABSORBANCE_AIR,
             receiver: receiver,
         }
     }
