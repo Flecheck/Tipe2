@@ -34,8 +34,8 @@ use ncollide3d::shape::Plane;
 use nalgebra::Isometry3;
 use nalgebra::Translation3;
 use nalgebra::Point3;
+use nalgebra::Unit;
 use nalgebra::UnitQuaternion;
-use nalgebra::UnitVector;
 
 pub type Float = f32;
 
@@ -49,11 +49,11 @@ fn main() {
     let mut sim = simulation::Simulation::new();
 
     let collisions = vec![
-        create_bvt_tuple(
-            &Plane::new([0.0, 1.0, 0.0].into()), 
+        /*create_bvt_tuple(
+            &Plane::new(Unit::new_normalize([0.0, 1.0, 0.0].into())), 
             Isometry3::from_parts(Translation3::new(0.0, -8.0, 0.0), UnitQuaternion::identity()), 
-            constants::RefractiveIndices::ground,
-        ),
+            *constants::RefractiveIndices::soil,
+        ),*/
         create_bvt_tuple(
             &Cuboid::new([2.0, 2.0, 2.0].into()), 
             Isometry3::from_parts(Translation3::new(0.0, 0.0, 0.0), UnitQuaternion::identity()), 

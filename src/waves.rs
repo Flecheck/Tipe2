@@ -111,7 +111,8 @@ pub fn tracing(world: &mut WorldDescriptor) {
                 *res.entry(x.time).or_default() += x.gain;
             }
             *transfers = res.iter().map(|(&time,&gain)|SignalEvent {time,gain}).collect();
-        }}
+        }
+    }
 }
 
 // TODO: Dephasage refraction
