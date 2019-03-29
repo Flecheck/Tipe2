@@ -5,6 +5,7 @@ use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
 use rayon;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use rayon::ThreadPoolBuilder;
 use std;
 use WAVE_VELOCITY;
 use TIME_PER_BEAT;
@@ -60,6 +61,7 @@ struct Output {
 
 /// Do the ray tracing and populate emetters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
+    let threadpool = ThreadPoolBuilder::new().stack_size(64 * 1024i32.powi(2)).build().unwrap();
     let ball = Ball::new(0.5f32);
     
     for (i,receiver) in world.receivers.iter().enumerate().filter_map(|(i,x)|x.as_ref().map(|x|(i,x))) {
@@ -70,7 +72,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
 
     let (so, ro) = channel::bounded(10_000);
 
-    rayon::scope(|s| {
+    threadpool.scope(|s| {
         let ref emitters = world.emitters;
 
         // Starting rays
