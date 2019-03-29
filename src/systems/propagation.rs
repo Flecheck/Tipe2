@@ -44,6 +44,7 @@ impl<'a> System<'a> for PropagationSystem {
         (&mut reception,).par_join().for_each(|(rec,)| {
             for (entity, events, max_time) in rec.transfer.iter() {
                 if let Some(emit) = emission.get(*entity) {
+                    println!("{}", events.len());
                     if rec.receive_buffer.len() < *max_time {
                         // Potentially faster to do it in one iteration
                         rec.receive_buffer.resize(*max_time, 0.0);

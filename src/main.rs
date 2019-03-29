@@ -29,10 +29,12 @@ use antennas::create_bvt_tuple;
 
 use ncollide3d::partitioning::BVT;
 use ncollide3d::shape::Cuboid;
+use ncollide3d::shape::Plane;
 use nalgebra::Isometry3;
 use nalgebra::Translation3;
 use nalgebra::Point3;
 use nalgebra::UnitQuaternion;
+use nalgebra::UnitVector;
 
 pub type Float = f32;
 
@@ -47,9 +49,14 @@ fn main() {
 
     let collisions = vec![
         create_bvt_tuple(
-            &Cuboid::new([0.5, 0.5, 0.5].into()), 
+            &Plane::new([0.0, 1.0, 0.0].into()), 
+            Isometry3::from_parts(Translation3::new(0.0, -8.0, 0.0), UnitQuaternion::identity()), 
+            constants::RefractiveIndices::ground,
+        ),
+        create_bvt_tuple(
+            &Cuboid::new([2.0, 2.0, 2.0].into()), 
             Isometry3::from_parts(Translation3::new(0.0, 0.0, 0.0), UnitQuaternion::identity()), 
-            2.0
+            1.0
         )];
 
     let description = antennas::WorldDescriptor {
