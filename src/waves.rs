@@ -28,13 +28,14 @@ use ncollide3d::shape::Ball;
 
 use std::mem;
 
+use constants::RefractiveIndices;
+
 const NB_SAMPLE: u32 = 10_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
 const MIN_GAIN: f32 = 0.001;
 const LOST_PER_BOUNCE: f32 = 0.7;
-const N_AIR: f32 = 1.;
 
 /// (Ray,energy,distance,max_energy,n)
 struct EnergyRay {
@@ -83,7 +84,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                         energy,
                         distance,
                         max_energy: energy,
-                        n: N_AIR,
+                        n: *RefractiveIndices::air,
                     },
                 )
             })
@@ -114,7 +115,7 @@ fn process(
         let dist_plus = norm(&(energyray.ray.dir * inter.1.toi)) / energyray.n;
         let mut n2 = inter.0.n;
         if n2 == energyray.n {
-            n2 = N_AIR;
+            n2 = *RefractiveIndices::air;
         }
         let n1 = energyray.n;
 
@@ -196,7 +197,7 @@ fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
             let z = theta.cos();
             (
                 Ray::new(pos.clone(), normalize(&Vector3::new(x, y, z))),
-                2. * phi * (1. - (theta / 2.).cos()) / (NB_SAMPLE * NB_SAMPLE),
+                2. * phi * (1. - (theta / 2.).cos()) / NB_SAMPLEF.powi(2),
             )
         })
     })
