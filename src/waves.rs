@@ -196,7 +196,7 @@ fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
             let z = theta.cos();
             (
                 Ray::new(pos.clone(), normalize(&Vector3::new(x, y, z))),
-                2. * phi * (1. - (theta / 2.).cos()),
+                2. * phi * (1. - (theta / 2.).cos()) / (NB_SAMPLE * NB_SAMPLE),
             )
         })
     })
