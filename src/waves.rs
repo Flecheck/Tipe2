@@ -95,7 +95,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                     },
                 )
             })
-            .for_each(|x| process(x, &so, &collisions));
+            .for_each(|x| process(x, &so, &collisions,0));
         });
 
         // Collecting
@@ -123,6 +123,7 @@ fn process(
     (ide, energyray): (usize, EnergyRay),
     out: &channel::Sender<Output>,
     bvs: &BVT<SceneObject, AABB<f32>>,
+    rec:usize,
 ) {
     if energyray.energy / energyray.max_energy < MIN_GAIN {
         return;
@@ -203,7 +204,10 @@ fn process(
 
             let nextrays =
                 nextrays.expect("WTFFFFFFFFFFFFFFFFFFF pas de reflection ou de refraction");
-            process((ide, nextrays), out, bvs);
+            if rec % 1000 == 0 {
+                println!("{}",rec)
+            }
+            process((ide, nextrays), out, bvs,rec+1);
         }
     }
 }
