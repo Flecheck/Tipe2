@@ -40,6 +40,7 @@ const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 const PI: f32 = std::f32::consts::PI;
 const MIN_GAIN: f32 = 0.001;
 const LOST_PER_BOUNCE: f32 = 0.7;
+const ABSORBANCE_AIR: f32 = 1.64;
 
 /// (Ray,energy,distance,max_energy,n)
 struct EnergyRay {
