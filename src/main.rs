@@ -49,11 +49,12 @@ fn main() {
     let mut sim = simulation::Simulation::new();
 
     let collisions = vec![
-        /*create_bvt_tuple(
-            &Plane::new(Unit::new_normalize([0.0, 1.0, 0.0].into())), 
-            Isometry3::from_parts(Translation3::new(0.0, -8.0, 0.0), UnitQuaternion::identity()), 
+        create_bvt_tuple(
+            //&Plane::new(Unit::new_normalize([0.0, 1.0, 0.0].into())), 
+            &Cuboid::new([128.0, 128.0, 128.0].into()), 
+            Isometry3::from_parts(Translation3::new(0.0, -128.0 - 8.0, 0.0), UnitQuaternion::identity()), 
             *constants::RefractiveIndices::soil,
-        ),*/
+        ),
         create_bvt_tuple(
             &Cuboid::new([2.0, 2.0, 2.0].into()), 
             Isometry3::from_parts(Translation3::new(0.0, 0.0, 0.0), UnitQuaternion::identity()), 
@@ -64,13 +65,16 @@ fn main() {
         emitters: vec![None, Some(antennas::SignalEmitter {
             position: Point3::new(4.0, 0.0, 0.0),
             max_power: 1.0,
+        }), Some(antennas::SignalEmitter {
+            position: Point3::new(2.0, 2.0, 3.0),
+            max_power: 2.0,
         })],
         receivers: vec![ Some(antennas::SignalReceiver {
             position: Point3::new(-4.0, 0.0, 0.0),
             transfers: vec![vec![], vec![]],
-        }), None
+        }), None, None
         ],
-        names: vec!["first".into(), "second".into()],
+        names: vec!["first".into(), "second".into(), "third".into()],
         collisions,
     };
 
