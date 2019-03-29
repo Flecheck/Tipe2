@@ -14,6 +14,7 @@ extern crate byteorder;
 #[macro_use]
 extern crate lazy_static;
 extern crate chrono;
+extern crate itertools;
 
 use clap::{App, SubCommand};
 

@@ -30,6 +30,10 @@ use std::mem;
 
 use constants::RefractiveIndices;
 
+use itertools::Itertools;
+
+use std::collections::HashMap;
+
 const NB_SAMPLE: u32 = 10_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
@@ -98,7 +102,16 @@ pub fn tracing(world: &mut WorldDescriptor) {
                 gain: out.energy,
             });
         }
-    })
+    });
+
+    for receiver in world.receivers.iter_mut().filter_map(|x|x.as_mut()) {
+        for mut transfers in &mut receiver.transfers {
+            let mut res = HashMap::new();
+            for x in transfers.iter() {
+                *res.entry(x.time).or_default() += x.gain;
+            }
+            *transfers = res.iter().map(|(&time,&gain)|SignalEvent {time,gain}).collect();
+        }}
 }
 
 // TODO: Dephasage refraction
