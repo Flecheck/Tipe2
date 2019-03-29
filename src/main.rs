@@ -24,8 +24,14 @@ mod transfer;
 mod waves;
 mod world;
 
+use antennas::create_bvt_tuple;
+
 use ncollide3d::partitioning::BVT;
+use ncollide3d::shape::Cuboid;
+use nalgebra::Isometry3;
+use nalgebra::Translation3;
 use nalgebra::Point3;
+use nalgebra::UnitQuaternion;
 
 pub type Float = f32;
 
@@ -38,6 +44,13 @@ pub const CHANNEL_BOUND: usize = 65536;
 fn main() {
     let mut sim = simulation::Simulation::new();
 
+    let collisions = vec![
+        create_bvt_tuple(
+            &Cuboid::new([0.5, 0.5, 0.5].into()), 
+            Isometry3::from_parts(Translation3::new(0.0, 0.0, 0.0), UnitQuaternion::identity()), 
+            2.0
+        )];
+
     let description = antennas::WorldDescriptor {
         emitters: vec![None, Some(antennas::SignalEmitter {
             position: Point3::new(4.0, 0.0, 0.0),
@@ -49,7 +62,7 @@ fn main() {
         }), None
         ],
         names: vec!["first".into(), "second".into()],
-        collisions: vec![],
+        collisions,
     };
 
     println!("Solving...");

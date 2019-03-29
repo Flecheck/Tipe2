@@ -54,7 +54,7 @@ struct Output {
 
 /// Do the ray tracing and populate emetters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
-    let ball = Ball::new(2.0f32);
+    let ball = Ball::new(0.5f32);
     
     for (i,receiver) in world.receivers.iter().enumerate().filter(|(i,x)|x.is_some()) {
         world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.as_ref().unwrap().position.x,receiver.as_ref().unwrap().position.y,receiver.as_ref().unwrap().position.z) ,UnitQuaternion::identity()), i))
