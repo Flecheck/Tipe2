@@ -105,11 +105,11 @@ pub fn tracing(world: &mut WorldDescriptor) {
     });
 
     for receiver in world.receivers.iter_mut().filter_map(|x|x.as_mut()) {
-        for mut transfers in &mut receiver.transfers {
-            let mut res = HashMap::new();
-            for x in transfers.iter() {
-                *res.entry(x.time).or_default() += x.gain;
-            }
+        for transfers in &mut receiver.transfers {
+            let res = transfers.iter().fold(HashMap::new(),|mut acc,x|{
+                *acc.entry(x.time).or_default() += x.gain;
+                acc
+                });
             *transfers = res.iter().map(|(&time,&gain)|SignalEvent {time,gain}).collect();
         }}
 }
