@@ -39,8 +39,8 @@ impl<'a> System<'a> for PropagationSystem {
 
     fn run(&mut self, (emission, mut reception): Self::SystemData) {
         //println!("propa");
-        use specs::ParJoin;
         use rayon::prelude::ParallelIterator;
+        use specs::ParJoin;
         (&mut reception,).par_join().for_each(|(rec,)| {
             for (entity, events, max_time) in rec.transfer.iter() {
                 if let Some(emit) = emission.get(*entity) {
@@ -48,20 +48,17 @@ impl<'a> System<'a> for PropagationSystem {
                         // Potentially faster to do it in one iteration
                         rec.receive_buffer.resize(*max_time, 0.0);
                     }
-                    
+
                     for e in events.into_iter() {
-                        *rec.receive_buffer
-                            .get_mut(e.time)
-                            .unwrap_or_else(|| panic!("Unreachable: sample not allocated, max_time: {}", max_time)) += emit.current * e.gain;
+                        *rec.receive_buffer.get_mut(e.time).unwrap_or_else(|| {
+                            panic!("Unreachable: sample not allocated, max_time: {}", max_time)
+                        }) += emit.current * e.gain;
                     }
                 }
             }
 
             //println!("{:?}", rec.receive_buffer);
-            rec.current = rec
-                .receive_buffer
-                .pop_front()
-                .expect("Isolated antenna");
+            rec.current = rec.receive_buffer.pop_front().expect("Isolated antenna");
         });
     }
 }

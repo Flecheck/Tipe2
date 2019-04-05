@@ -1,8 +1,8 @@
-use specs::prelude::*;
 use super::propagation::Reception;
-use std::io;
+use byteorder::{LittleEndian, WriteBytesExt};
+use specs::prelude::*;
 use std::collections::HashMap;
-use byteorder::{WriteBytesExt, LittleEndian};
+use std::io;
 
 pub struct TrackerSystem {
     files: HashMap<String, std::fs::File>,
@@ -13,11 +13,12 @@ impl TrackerSystem {
         let mut files = HashMap::new();
         std::fs::create_dir("output");
         for name in names {
-            files.insert(name.clone(), std::fs::File::create(format!("output/{}.bin", name)).expect("File ded lol"));
+            files.insert(
+                name.clone(),
+                std::fs::File::create(format!("output/{}.bin", name)).expect("File ded lol"),
+            );
         }
-        Self {
-            files,
-        }
+        Self { files }
     }
 }
 

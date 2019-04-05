@@ -7,8 +7,8 @@ use rayon;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use rayon::ThreadPoolBuilder;
 use std;
-use WAVE_VELOCITY;
 use TIME_PER_BEAT;
+use WAVE_VELOCITY;
 
 use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::partitioning::BVT;
@@ -22,8 +22,8 @@ use rand;
 use nalgebra::{dot, norm, normalize};
 
 use antennas::create_bvt_tuple_receiver;
-use nalgebra::{Isometry3,Translation3};
 use nalgebra::geometry::UnitQuaternion;
+use nalgebra::{Isometry3, Translation3};
 
 use ncollide3d::shape::Ball;
 
@@ -35,13 +35,13 @@ use itertools::Itertools;
 
 use std::collections::HashMap;
 
-const NB_SAMPLE: u32 = 1_000;
+const NB_SAMPLE: u32 = 10_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
 const MIN_GAIN: f32 = 0.001;
-const LOST_PER_BOUNCE: f32 = 0.7;
-pub const ABSORBANCE_AIR: f32 = 0.1;
+const BOUNCE_MARGIN: f32 = 0.001;
+pub const ABSORBANCE_AIR: f32 = 0.0001;
 
 /// (Ray,energy,distance,max_energy,n)
 struct EnergyRay {
@@ -61,11 +61,30 @@ struct Output {
 
 /// Do the ray tracing and populate emitters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
-    let threadpool = ThreadPoolBuilder::new().stack_size(64 * 1024usize.pow(2)).build().unwrap();
+    let threadpool = ThreadPoolBuilder::new()
+        .stack_size(64 * 1024usize.pow(2))
+        .build()
+        .unwrap();
     let ball = Ball::new(0.5f32);
-    
-    for (i,receiver) in world.receivers.iter().enumerate().filter_map(|(i,x)|x.as_ref().map(|x|(i,x))) {
-        world.collisions.push(create_bvt_tuple_receiver(&ball,Isometry3::from_parts(Translation3::new(receiver.position.x,receiver.position.y,receiver.position.z) ,UnitQuaternion::identity()), i))
+
+    for (i, receiver) in world
+        .receivers
+        .iter()
+        .enumerate()
+        .filter_map(|(i, x)| x.as_ref().map(|x| (i, x)))
+    {
+        world.collisions.push(create_bvt_tuple_receiver(
+            &ball,
+            Isometry3::from_parts(
+                Translation3::new(
+                    receiver.position.x,
+                    receiver.position.y,
+                    receiver.position.z,
+                ),
+                UnitQuaternion::identity(),
+            ),
+            i,
+        ))
     }
 
     let collisions = BVT::new_balanced(mem::replace(&mut world.collisions, vec![]));
@@ -76,11 +95,15 @@ pub fn tracing(world: &mut WorldDescriptor) {
         let ref emitters = world.emitters;
 
         // Starting rays
-        let rays = emitters.into_par_iter().enumerate().filter_map(|(i,x)|x.as_ref().map(|x|(i,x))).flat_map(|(ide, x)| {
-            emit((x.position).clone())
-                .map(move |ray| (ray.0, x.max_power * ray.1, 0.))
-                .map(move |ray| (ide, ray))
-        });
+        let rays = emitters
+            .into_par_iter()
+            .enumerate()
+            .filter_map(|(i, x)| x.as_ref().map(|x| (i, x)))
+            .flat_map(|(ide, x)| {
+                emit((x.position).clone())
+                    .map(move |ray| (ray.0, x.max_power * ray.1, 0.))
+                    .map(move |ray| (ide, ray))
+            });
         // Processing
         s.spawn(move |_s| {
             rays.map(|(ide, (ray, energy, distance))| {
@@ -95,7 +118,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                     },
                 )
             })
-            .for_each(|x| process(x, &so, &collisions,0));
+            .for_each(|x| process(x, &so, &collisions, 0));
         });
 
         // Collecting
@@ -107,13 +130,16 @@ pub fn tracing(world: &mut WorldDescriptor) {
         }
     });
 
-    for receiver in world.receivers.iter_mut().filter_map(|x|x.as_mut()) {
+    for receiver in world.receivers.iter_mut().filter_map(|x| x.as_mut()) {
         for transfers in &mut receiver.transfers {
-            let res = transfers.iter().fold(HashMap::new(),|mut acc,x|{
+            let res = transfers.iter().fold(HashMap::new(), |mut acc, x| {
                 *acc.entry(x.time).or_default() += x.gain;
                 acc
-                });
-            *transfers = res.iter().map(|(&time,&gain)|SignalEvent {time,gain}).collect();
+            });
+            *transfers = res
+                .iter()
+                .map(|(&time, &gain)| SignalEvent { time, gain })
+                .collect();
         }
     }
 }
@@ -123,7 +149,7 @@ fn process(
     (ide, energyray): (usize, EnergyRay),
     out: &channel::Sender<Output>,
     bvs: &BVT<SceneObject, AABB<f32>>,
-    rec:usize,
+    rec: usize,
 ) {
     if energyray.energy / energyray.max_energy < MIN_GAIN {
         return;
@@ -151,29 +177,28 @@ fn process(
             out.send(Output {
                 ide,
                 idr,
-                time: (energyray.distance + dist_plus / (WAVE_VELOCITY * TIME_PER_BEAT)).floor() as usize,
+                time: (energyray.distance + dist_plus / (WAVE_VELOCITY * TIME_PER_BEAT)).floor()
+                    as usize,
                 energy: energy,
             })
         } else {
             if n2 / n1 > 1. {
                 // Reflection
-                    
-                    let reflection = next_rays_reflection(&energyray.ray, &inter);
-                    let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
 
-                    nextrays = Some(EnergyRay {
-                        ray: reflection.translate_by(normal_l * 0.01),
-                        energy: energy,
-                        distance: energyray.distance + dist_plus,
-                        max_energy: energyray.max_energy,
-                        n: n1,
-                    });
-                
+                let reflection = next_rays_reflection(&energyray.ray, &inter);
+                let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
+
+                nextrays = Some(EnergyRay {
+                    ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
+                    energy: energy,
+                    distance: energyray.distance + dist_plus,
+                    max_energy: energyray.max_energy,
+                    n: n1,
+                });
             }
 
             // Refraction
             if n2 / n1 <= 1. {
-
                 let cos1 = norm(&(dot(&normal, &energyray.ray.dir) * normal - energyray.ray.dir));
                 let cos2 = (1. - (n1 / n2) * (n1 / n2) * (1. - cos1 * cos1).sqrt()).sqrt();
 
@@ -186,7 +211,7 @@ fn process(
                         let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
 
                         nextrays = Some(EnergyRay {
-                            ray: reflection.translate_by(normal_l * 0.01),
+                            ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
                             energy: energy,
                             distance: energyray.distance + dist_plus,
                             max_energy: energyray.max_energy,
@@ -195,10 +220,10 @@ fn process(
                     }
                 } else {
                     let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
-                    let normal_l = *normalize(&(dot(&normal, &refraction.0.dir) * normal));
+                    let normal_l = normalize(&(dot(&normal, &refraction.0.dir) * normal));
 
                     nextrays = Some(EnergyRay {
-                        ray: refraction.0.translate_by(normal_l * 0.01),
+                        ray: refraction.0.translate_by(normal_l * BOUNCE_MARGIN),
                         energy: energy,
                         distance: energyray.distance + dist_plus,
                         max_energy: energyray.max_energy,
@@ -213,7 +238,7 @@ fn process(
                 println!("{}",dist_plus)
             }*/
             //if rec < 1000 {
-                process((ide, nextrays), out, bvs,rec+1);
+            process((ide, nextrays), out, bvs, rec + 1);
             //}
         }
     }

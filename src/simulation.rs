@@ -9,8 +9,12 @@ use std::thread;
 use CHANNEL_BOUND;
 
 use antennas::{SceneObject, SerializableWorld, SignalEvent, SignalReceiver, WorldDescriptor};
-use systems::{propagation::{Emission, PropagationSystem, Reception}, tracker::TrackerSystem, simple_wave::{SimpleWaveEmitter, SimpleWave}};
 use systems::AntennaPosition;
+use systems::{
+    propagation::{Emission, PropagationSystem, Reception},
+    simple_wave::{SimpleWave, SimpleWaveEmitter},
+    tracker::TrackerSystem,
+};
 
 use specs::{
     Component, DispatcherBuilder, Entities, Entity, Join, ReadStorage, VecStorage, World,
@@ -165,14 +169,17 @@ impl Simulation {
                             ));
                         }
                     }
-                    recs.insert(entities[i].1, Reception::new(transfer, world.names[i].clone()))
-                        .expect("Unreachable: failed to insert Reception");
+                    recs.insert(
+                        entities[i].1,
+                        Reception::new(transfer, world.names[i].clone()),
+                    )
+                    .expect("Unreachable: failed to insert Reception");
                 }
             }
         });
     }
 
-    pub fn start(&mut self, names: Vec<String>) {        
+    pub fn start(&mut self, names: Vec<String>) {
         let mut dispatcher = DispatcherBuilder::new()
             .with(SimpleWave, "simple_wave", &[])
             .with(PropagationSystem, "propagation_system", &[])

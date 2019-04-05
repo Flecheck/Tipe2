@@ -40,7 +40,7 @@ pub struct WorldDescriptor {
     pub receivers: Vec<Option<SignalReceiver>>,
     pub names: Vec<String>,
     pub collisions: Vec<(SceneObject, AABB<f32>)>,
-}   
+}
 
 pub struct SceneObject {
     geometry: Box<RayCast<f32> + Sync + Send>,
@@ -51,7 +51,12 @@ pub struct SceneObject {
 }
 
 impl SceneObject {
-    pub fn new<G>(geometry: Box<G>, transform: Isometry<f32>, n: f32, receiver: Option<usize>) -> SceneObject
+    pub fn new<G>(
+        geometry: Box<G>,
+        transform: Isometry<f32>,
+        n: f32,
+        receiver: Option<usize>,
+    ) -> SceneObject
     where
         G: 'static + Sync + Send + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
     {
@@ -59,7 +64,7 @@ impl SceneObject {
             geometry,
             transform,
             n,
-            absorbance:ABSORBANCE_AIR,
+            absorbance: ABSORBANCE_AIR,
             receiver: receiver,
         }
     }
@@ -95,17 +100,21 @@ where
     G: 'static + Send + Sync + Clone + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
 {
     (
-        SceneObject::new(Box::new(shape.clone()), transform, n,None),
+        SceneObject::new(Box::new(shape.clone()), transform, n, None),
         aabb(shape, &transform),
     )
 }
 
-pub fn create_bvt_tuple_receiver<G>(shape: &G, transform: Isometry<f32>,receiver: usize) -> (SceneObject, AABB<f32>)
+pub fn create_bvt_tuple_receiver<G>(
+    shape: &G,
+    transform: Isometry<f32>,
+    receiver: usize,
+) -> (SceneObject, AABB<f32>)
 where
     G: 'static + Send + Sync + Clone + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
 {
     (
-        SceneObject::new(Box::new(shape.clone()), transform, 1.,Some(receiver)),
+        SceneObject::new(Box::new(shape.clone()), transform, 1., Some(receiver)),
         aabb(shape, &transform),
     )
 }
