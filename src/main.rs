@@ -50,9 +50,9 @@ fn main() {
 
     let collisions = vec![
         create_bvt_tuple(
-            //&Plane::new(Unit::new_normalize([0.0, 1.0, 0.0].into())), 
-            &Cuboid::new([128.0, 128.0, 128.0].into()), 
-            Isometry3::from_parts(Translation3::new(0.0, -128.0 - 8.0, 0.0), UnitQuaternion::identity()), 
+            &Plane::new(Unit::new_normalize([0.0, 1.0, 0.0].into())), 
+            //&Cuboid::new([128.0, 128.0, 128.0].into()), 
+            Isometry3::from_parts(Translation3::new(0.0, -8.0, 0.0), UnitQuaternion::identity()), 
             *constants::RefractiveIndices::soil,
         ),
         create_bvt_tuple(

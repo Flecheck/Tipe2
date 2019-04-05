@@ -35,7 +35,7 @@ use itertools::Itertools;
 
 use std::collections::HashMap;
 
-const NB_SAMPLE: u32 = 10_000;
+const NB_SAMPLE: u32 = 1_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
@@ -159,7 +159,7 @@ fn process(
                     let reflection = next_rays_reflection(&energyray.ray, &inter);
 
                     nextrays = Some(EnergyRay {
-                        ray: reflection.translate_by(inter.1.normal * 0.01),
+                        ray: reflection.translate_by(-inter.1.normal * 0.01),
                         energy: energy,
                         distance: energyray.distance + dist_plus,
                         max_energy: energyray.max_energy,
@@ -183,7 +183,7 @@ fn process(
                         let reflection = next_rays_reflection(&energyray.ray, &inter);
 
                         nextrays = Some(EnergyRay {
-                            ray: reflection.translate_by(inter.1.normal * 0.01),
+                            ray: reflection.translate_by(-inter.1.normal * 0.01),
                             energy: energy,
                             distance: energyray.distance + dist_plus,
                             max_energy: energyray.max_energy,
@@ -193,7 +193,7 @@ fn process(
                 } else {
                     let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
                     nextrays = Some(EnergyRay {
-                        ray: refraction.0.translate_by(inter.1.normal * 0.01),
+                        ray: refraction.0.translate_by(-inter.1.normal * 0.01),
                         energy: energy,
                         distance: energyray.distance + dist_plus,
                         max_energy: energyray.max_energy,
@@ -204,10 +204,12 @@ fn process(
 
             let nextrays =
                 nextrays.expect("WTFFFFFFFFFFFFFFFFFFF pas de reflection ou de refraction");
-            if rec % 1000 == 0 {
-                println!("{}",rec)
-            }
-            process((ide, nextrays), out, bvs,rec+1);
+            /*if rec % 1000 == 0 && rec != 0 {
+                println!("{}",dist_plus)
+            }*/
+            //if rec < 1000 {
+                process((ide, nextrays), out, bvs,rec+1);
+            //}
         }
     }
 }
