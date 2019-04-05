@@ -145,7 +145,7 @@ fn process(
 
         let rand: f32 = rand::random();
 
-        let normal = &inter.1.normal;
+        let normal = normalize(&inter.1.normal);
 
         if let Some(idr) = inter.0.receiver {
             out.send(Output {
@@ -159,7 +159,7 @@ fn process(
                 // Reflection
                     
                     let reflection = next_rays_reflection(&energyray.ray, &inter);
-                    let normal_l = normalize(dot(&normal, &reflection.dir) * normal);
+                    let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
 
                     nextrays = Some(EnergyRay {
                         ray: reflection.translate_by(-inter.1.normal * 0.01),
@@ -183,7 +183,7 @@ fn process(
                     // Reflection
                     {
                         let reflection = next_rays_reflection(&energyray.ray, &inter);
-                        let normal_l = normalize(dot(&normal, &reflection.dir) * normal);
+                        let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
 
                         nextrays = Some(EnergyRay {
                             ray: reflection.translate_by(-inter.1.normal * 0.01),
@@ -195,7 +195,7 @@ fn process(
                     }
                 } else {
                     let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
-                    let normal_l = normalize(dot(&normal, &refraction.dir) * normal);
+                    let normal_l = *normalize(&(dot(&normal, &refraction.0.dir) * normal));
 
                     nextrays = Some(EnergyRay {
                         ray: refraction.0.translate_by(-inter.1.normal * 0.01),
