@@ -33,7 +33,7 @@ use constants::RefractiveIndices;
 
 use itertools::Itertools;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 const NB_SAMPLE: u32 = 10_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
@@ -132,7 +132,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
 
     for receiver in world.receivers.iter_mut().filter_map(|x| x.as_mut()) {
         for transfers in &mut receiver.transfers {
-            let res = transfers.iter().fold(HashMap::new(), |mut acc, x| {
+            let res = transfers.iter().fold(BTreeMap::new(), |mut acc, x| {
                 *acc.entry(x.time).or_default() += x.gain;
                 acc
             });
