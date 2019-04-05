@@ -145,6 +145,8 @@ fn process(
 
         let rand: f32 = rand::random();
 
+        let normal = &inter.1.normal;
+
         if let Some(idr) = inter.0.receiver {
             out.send(Output {
                 ide,
@@ -155,8 +157,9 @@ fn process(
         } else {
             if n2 / n1 > 1. {
                 // Reflection
-                {
+                    
                     let reflection = next_rays_reflection(&energyray.ray, &inter);
+                    let normal_l = normalize(dot(&normal, &reflection.dir) * normal);
 
                     nextrays = Some(EnergyRay {
                         ray: reflection.translate_by(-inter.1.normal * 0.01),
@@ -165,12 +168,11 @@ fn process(
                         max_energy: energyray.max_energy,
                         n: n1,
                     });
-                }
+                
             }
 
             // Refraction
             if n2 / n1 <= 1. {
-                let normal = normalize(&inter.1.normal);
 
                 let cos1 = norm(&(dot(&normal, &energyray.ray.dir) * normal - energyray.ray.dir));
                 let cos2 = (1. - (n1 / n2) * (n1 / n2) * (1. - cos1 * cos1).sqrt()).sqrt();
@@ -181,6 +183,7 @@ fn process(
                     // Reflection
                     {
                         let reflection = next_rays_reflection(&energyray.ray, &inter);
+                        let normal_l = normalize(dot(&normal, &reflection.dir) * normal);
 
                         nextrays = Some(EnergyRay {
                             ray: reflection.translate_by(-inter.1.normal * 0.01),
@@ -192,6 +195,8 @@ fn process(
                     }
                 } else {
                     let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
+                    let normal_l = normalize(dot(&normal, &refraction.dir) * normal);
+
                     nextrays = Some(EnergyRay {
                         ray: refraction.0.translate_by(-inter.1.normal * 0.01),
                         energy: energy,
