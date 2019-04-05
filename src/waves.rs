@@ -62,6 +62,7 @@ struct Output {
 /// Do the ray tracing and populate emitters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
     let threadpool = ThreadPoolBuilder::new()
+        .num_threads(1)
         .stack_size(64 * 1024usize.pow(2))
         .build()
         .unwrap();

@@ -1,61 +1,61 @@
-use antennas::{create_bvt_tuple, SignalEmitter, SignalReceiver, WorldDescriptor};
-use nalgebra::{zero, Isometry3, Point3, Vector3};
 use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::bounding_volume::HasBoundingVolume;
-use ncollide3d::partitioning::BVT;
 use ncollide3d::query::RayCast;
+
+use antennas::create_bvt_tuple;
+use antennas::SceneObject;
+
+use constants;
+
+use nalgebra::Isometry3;
+use nalgebra::Point3;
+use nalgebra::Translation3;
+use nalgebra::Unit;
+use nalgebra::UnitQuaternion;
+use ncollide3d::partitioning::BVT;
 use ncollide3d::shape::Cuboid;
+use ncollide3d::shape::Plane;
 
-/*use antennas::SceneObject;
-
-pub struct Singularity {
-    label: String,
-    position: Point3<f32>,
+fn plane(pos: [f32; 3], n: f32, normal: [f32; 3]) -> (SceneObject, AABB<f32>) {
+    create_bvt_tuple(
+        &Plane::new(Unit::new_normalize(normal.into())),
+        Isometry3::from_parts(
+            Translation3::new(pos[0], pos[1], pos[2]),
+            UnitQuaternion::identity(),
+        ),
+        n,
+    )
 }
 
-pub struct World {
-    singularities: Vec<Singularity>,
-    objects: Vec<(SceneObject, AABB<f32>)>,
+fn cuboid(pos: [f32; 3], n: f32, half_diag: [f32; 3]) -> (SceneObject, AABB<f32>) {
+    create_bvt_tuple(
+        &Cuboid::new(half_diag.into()),
+        Isometry3::from_parts(
+            Translation3::new(pos[0], pos[1], pos[2]),
+            UnitQuaternion::identity(),
+        ),
+        n,
+    )
 }
 
-impl World {
-    pub fn insert_object<
-        T: 'static + Send + Sync + Clone + RayCast<f32> + HasBoundingVolume<f32, AABB<f32>>,
-    >(
-        &mut self,
-        object: T,
-        position: Isometry3<f32>,
-    ) {
-        self.objects.push(create_bvt_tuple(&object, position, 1.));
-    }
-
-    pub fn insert(&mut self, singularity: Singularity) {
-        self.singularities.push(singularity);
-    }
-
-    pub fn get_bvt(self) -> BVT<SceneObject, AABB<f32>> {
-        BVT::new_balanced(self.objects)
-    }
+pub fn basic_collisions() -> Vec<(SceneObject, AABB<f32>)> {
+    vec![
+        plane(
+            [0.0, -8.0, 0.0],
+            *constants::RefractiveIndices::soil,
+            [0.0, 1.0, 0.0],
+        ),
+        cuboid([0.0; 3], 1.0, [2.0; 3]),
+    ]
 }
 
-pub fn dummy_world() -> WorldDescriptor {
-    let emitters = vec![SignalEmitter {
-        position: Point3::new(-2.0, 0.0, 0.0),
-        max_power: 16.0,
-        transfers: vec![Vec::new()],
-    }];
-    let receivers = vec![SignalReceiver {
-        position: Point3::new(2.0, 0.0, 0.0),
-    }];
-
-    let pos = Isometry3::new(Vector3::new(0.5, 0.5, 0.5), zero());
-    let obstacle = Cuboid::new(Vector3::new(0.5, 0.5, 0.5));
-    let collisions = BVT::new_balanced(vec![create_bvt_tuple(&obstacle, pos, 1.)]);
-
-    WorldDescriptor {
-        emitters,
-        receivers,
-        collisions,
-    }
+pub fn complex_collisions() -> Vec<(SceneObject, AABB<f32>)> {
+    vec![
+        plane( // Ground
+            [0.0, -8.0, 0.0],
+            *constants::RefractiveIndices::soil,
+            [0.0, 1.0, 0.0],
+        ),
+        //cuboid()
+    ]
 }
-*/
