@@ -162,7 +162,7 @@ fn process(
                     let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
 
                     nextrays = Some(EnergyRay {
-                        ray: reflection.translate_by(-inter.1.normal * 0.01),
+                        ray: reflection.translate_by(normal_l * 0.01),
                         energy: energy,
                         distance: energyray.distance + dist_plus,
                         max_energy: energyray.max_energy,
@@ -186,7 +186,7 @@ fn process(
                         let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
 
                         nextrays = Some(EnergyRay {
-                            ray: reflection.translate_by(-inter.1.normal * 0.01),
+                            ray: reflection.translate_by(normal_l * 0.01),
                             energy: energy,
                             distance: energyray.distance + dist_plus,
                             max_energy: energyray.max_energy,
@@ -198,7 +198,7 @@ fn process(
                     let normal_l = *normalize(&(dot(&normal, &refraction.0.dir) * normal));
 
                     nextrays = Some(EnergyRay {
-                        ray: refraction.0.translate_by(-inter.1.normal * 0.01),
+                        ray: refraction.0.translate_by(normal_l * 0.01),
                         energy: energy,
                         distance: energyray.distance + dist_plus,
                         max_energy: energyray.max_energy,
