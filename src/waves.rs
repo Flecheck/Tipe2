@@ -133,6 +133,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
     for receiver in world.receivers.iter_mut().filter_map(|x| x.as_mut()) {
         for transfers in &mut receiver.transfers {
             let res = transfers.iter().fold(BTreeMap::new(), |mut acc, x| {
+                // Using BTreeMap to get vec sorted by time
                 *acc.entry(x.time).or_default() += x.gain;
                 acc
             });
