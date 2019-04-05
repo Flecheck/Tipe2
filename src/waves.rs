@@ -232,8 +232,7 @@ fn process(
                 }
             }
 
-            let nextrays =
-                nextrays.expect("WTFFFFFFFFFFFFFFFFFFF pas de reflection ou de refraction");
+            let nextrays = nextrays.unwrap();
             /*if rec % 1000 == 0 && rec != 0 {
                 println!("{}",dist_plus)
             }*/
