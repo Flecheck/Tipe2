@@ -40,11 +40,11 @@ fn cuboid(pos: [f32; 3], n: f32, half_diag: [f32; 3]) -> (SceneObject, AABB<f32>
 
 pub fn basic_collisions() -> Vec<(SceneObject, AABB<f32>)> {
     vec![
-        plane(
+        /*plane(
             [0.0, -8.0, 0.0],
             *constants::RefractiveIndices::soil,
             [0.0, 1.0, 0.0],
-        ),
+        ),*/
         cuboid([0.0; 3], 1.0, [2.0; 3]),
     ]
 }

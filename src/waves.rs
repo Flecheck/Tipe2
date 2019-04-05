@@ -40,7 +40,7 @@ const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
 const MIN_GAIN: f32 = 0.001;
-const BOUNCE_MARGIN: f32 = 0.001;
+const BOUNCE_MARGIN: f32 = 0.00001;
 pub const ABSORBANCE_AIR: f32 = 0.0001;
 
 /// (Ray,energy,distance,max_energy,n)
@@ -62,7 +62,6 @@ struct Output {
 /// Do the ray tracing and populate emitters with receivers
 pub fn tracing(world: &mut WorldDescriptor) {
     let threadpool = ThreadPoolBuilder::new()
-        .num_threads(1)
         .stack_size(64 * 1024usize.pow(2))
         .build()
         .unwrap();

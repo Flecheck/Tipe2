@@ -56,16 +56,18 @@ fn main() {
             Some(antennas::SignalEmitter {
                 position: Point3::new(4.0, 0.0, 0.0),
                 max_power: 1.0,
+                kind: simulation::EmissionKind::Pulse(1000000000.0),
             }),
             Some(antennas::SignalEmitter {
-                position: Point3::new(2.0, 2.0, 3.0),
-                max_power: 2.0,
+                position: Point3::new(-5.0, 0.0, 0.0),
+                max_power: 1.0,
+                kind: simulation::EmissionKind::Pulse(1100000000.0),
             }),
         ],
         receivers: vec![
             Some(antennas::SignalReceiver {
-                position: Point3::new(-4.0, 0.0, 0.0),
-                transfers: vec![vec![], vec![]],
+                position: Point3::new(0.0, 0.0, 0.0),
+                transfers: vec![vec![], vec![], vec![]],
             }),
             None,
             None,
@@ -78,7 +80,7 @@ fn main() {
     let time = chrono::Duration::span(|| sim.solve(description));
     println!("Solved in {} seconds", time.num_seconds());
     println!("Running...");
-    let time = chrono::Duration::span(|| sim.start(vec!["first".into(), "second".into()]));
+    let time = chrono::Duration::span(|| sim.start(vec!["first".into(), "second".into()], 0x40000));
     println!("Ran in {} seconds", time.num_seconds());
     println!("Done my dudes!");
 }

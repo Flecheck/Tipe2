@@ -38,7 +38,6 @@ impl<'a> System<'a> for PropagationSystem {
     type SystemData = (ReadStorage<'a, Emission>, WriteStorage<'a, Reception>);
 
     fn run(&mut self, (emission, mut reception): Self::SystemData) {
-        //println!("propa");
         use rayon::prelude::ParallelIterator;
         use specs::ParJoin;
         (&mut reception,).par_join().for_each(|(rec,)| {

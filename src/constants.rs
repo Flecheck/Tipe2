@@ -1,5 +1,4 @@
 pub mod RefractiveIndices {
-
     lazy_static! {
         pub static ref air: f32 = 1f32;
         pub static ref snow: f32 = 1.533f32.sqrt();

@@ -42,6 +42,11 @@ pub enum AntennaKind {
     Rece,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum EmissionKind {
+    Pulse (f32),
+}
+
 impl Simulation {
     pub fn new() -> Self {
         Self {
@@ -128,16 +133,18 @@ impl Simulation {
         let mut entities: Vec<(AntennaKind, Entity)> = Vec::with_capacity(world.names.len());
         for i in 0..world.names.len() {
             use specs::Builder;
-            if world.emitters[i].is_some() {
+            if let Some(ref emit) = world.emitters[i] {
                 let antenna = self
                     .world
                     .create_entity()
                     .with(Name {
                         name: world.names[i].clone(),
                     })
-                    .with(Emission { current: 0.0 })
-                    .with(SimpleWaveEmitter::new(1000000000.0))
-                    .build();
+                    .with(Emission { current: 0.0 });
+                let antenna = match emit.kind {
+                    EmissionKind::Pulse(pulse) => antenna.with(SimpleWaveEmitter::new(pulse)),
+                };
+                let antenna = antenna.build();
                 entities.push((AntennaKind::Emit, antenna));
             } else {
                 let antenna = self
@@ -179,7 +186,7 @@ impl Simulation {
         });
     }
 
-    pub fn start(&mut self, names: Vec<String>) {
+    pub fn start(&mut self, names: Vec<String>, time: usize) {
         let mut dispatcher = DispatcherBuilder::new()
             .with(SimpleWave, "simple_wave", &[])
             .with(PropagationSystem, "propagation_system", &[])
@@ -188,7 +195,7 @@ impl Simulation {
 
         println!("Dispatching!");
 
-        for _ in 0..0x4000 {
+        for _ in 0..time {
             dispatcher.dispatch(&mut self.world.res);
         }
     }

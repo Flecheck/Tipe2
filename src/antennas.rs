@@ -10,6 +10,7 @@ use ncollide3d::query::RayCast;
 use ncollide3d::query::RayIntersection;
 
 use waves::ABSORBANCE_AIR;
+use simulation;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalReceiver {
@@ -27,6 +28,7 @@ pub struct SignalEvent {
 pub struct SignalEmitter {
     pub position: Point3<f32>,
     pub max_power: f32,
+    pub kind: simulation::EmissionKind,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
