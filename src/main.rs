@@ -29,7 +29,7 @@ mod transfer;
 mod waves;
 mod world;
 
-use antennas::create_bvt_tuple;
+use crate::antennas::create_bvt_tuple;
 
 use nalgebra::Isometry3;
 use nalgebra::Point3;

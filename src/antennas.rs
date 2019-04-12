@@ -9,8 +9,8 @@ use ncollide3d::query::Ray;
 use ncollide3d::query::RayCast;
 use ncollide3d::query::RayIntersection;
 
-use waves::ABSORBANCE_AIR;
-use simulation;
+use crate::waves::ABSORBANCE_AIR;
+use crate::simulation;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalReceiver {

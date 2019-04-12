@@ -2,10 +2,10 @@ use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::bounding_volume::HasBoundingVolume;
 use ncollide3d::query::RayCast;
 
-use antennas::create_bvt_tuple;
-use antennas::SceneObject;
+use crate::antennas::create_bvt_tuple;
+use crate::antennas::SceneObject;
 
-use constants;
+use crate::constants;
 
 use nalgebra::Isometry3;
 use nalgebra::Point3;

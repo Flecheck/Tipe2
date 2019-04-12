@@ -6,11 +6,11 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::{HashMap, VecDeque};
 use std::thread;
-use CHANNEL_BOUND;
+use crate::CHANNEL_BOUND;
 
-use antennas::{SceneObject, SerializableWorld, SignalEvent, SignalReceiver, WorldDescriptor};
-use systems::AntennaPosition;
-use systems::{
+use crate::antennas::{SceneObject, SerializableWorld, SignalEvent, SignalReceiver, WorldDescriptor};
+use crate::systems::AntennaPosition;
+use crate::systems::{
     propagation::{Emission, PropagationSystem, Reception},
     simple_wave::{SimpleWave, SimpleWaveEmitter},
     ofdm::{OFDMEmitter, OFDMReceiver},
@@ -94,7 +94,7 @@ impl Simulation {
 
         let reception_store = self.world.read_resource::<ReadStorage<Reception>>();
         let positions = self.world.read_resource::<ReadStorage<AntennaPosition>>();
-        for i in 0..count {
+        for _i in 0..count {
             for (e, k) in &entity_resolve {
                 let recs = reception_store
                     .get(*e)
@@ -129,7 +129,7 @@ impl Simulation {
     }
 
     pub fn load(&mut self, path: &str) {
-        let sim: StoredSimulation = ron::de::from_reader(std::io::BufReader::new(
+        let _sim: StoredSimulation = ron::de::from_reader(std::io::BufReader::new(
             std::fs::File::open(path).expect("Could not open simulation file"),
         ))
         .expect("Could not deserialize simulation");

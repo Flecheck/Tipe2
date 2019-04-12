@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use antennas::{SignalEvent, WorldDescriptor};
+use crate::antennas::{SignalEvent, WorldDescriptor};
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
@@ -7,21 +7,21 @@ use rayon;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use rayon::ThreadPoolBuilder;
 use std;
-use TIME_PER_BEAT;
-use WAVE_VELOCITY;
+use crate::TIME_PER_BEAT;
+use crate::WAVE_VELOCITY;
 
 use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::partitioning::BVT;
 
-use antennas::ClosestRayTOICostFn;
-use antennas::SceneObject;
+use crate::antennas::ClosestRayTOICostFn;
+use crate::antennas::SceneObject;
 use ncollide3d::query::RayIntersection;
 
 use rand;
 
 use nalgebra::{dot, norm, normalize};
 
-use antennas::create_bvt_tuple_receiver;
+use crate::antennas::create_bvt_tuple_receiver;
 use nalgebra::geometry::UnitQuaternion;
 use nalgebra::{Isometry3, Translation3};
 
@@ -29,7 +29,7 @@ use ncollide3d::shape::Ball;
 
 use std::mem;
 
-use constants::RefractiveIndices;
+use crate::constants::RefractiveIndices;
 
 use itertools::Itertools;
 
