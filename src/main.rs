@@ -8,10 +8,6 @@ extern crate rustfft;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate byteorder;
-extern crate rand;
-extern crate ron;
-extern crate specs;
 #[macro_use]
 extern crate lazy_static;
 extern crate bit_vec;
@@ -109,12 +105,8 @@ fn main() {
     let time = chrono::Duration::span(|| sim.solve(description));
     println!("Solved in {} seconds", time.num_seconds());
     println!("Running...");
-    let time = chrono::Duration::span(|| {
-        sim.start(
-            vec!["ofdm_emit".into(), "ofdm_rec".into()],
-            0x20000,
-        )
-    });
+    let time =
+        chrono::Duration::span(|| sim.start(vec!["ofdm_emit".into(), "ofdm_rec".into()], 0x20000));
     println!("Ran in {} seconds", time.num_seconds());
     println!("Gathering OFDM results...");
     sim.world.exec(
