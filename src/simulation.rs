@@ -43,7 +43,7 @@ fn check_valid(transf: &Vec<SignalEvent>) -> bool {
 
 pub struct Simulation {
     pub world: World,
-    obstacles: Vec<StoredObstacle>,
+    pub descriptor: WorldDescriptor,
 }
 
 #[derive(PartialEq, Eq)]
@@ -65,80 +65,50 @@ pub enum ReceptionKind {
 }
 
 impl Simulation {
-    pub fn new() -> Self {
+    pub fn new(descriptor: WorldDescriptor) -> Self {
         Self {
             world: World::new(),
-            obstacles: Vec::new(),
+            descriptor,
         }
     }
 
-    pub fn save(&mut self, path: &str) {
-        let mut entity_resolve: HashMap<Entity, u32> = HashMap::new();
-        let mut count = 0;
-        self.world.exec(
-            |(entities, emission, reception): (
-                Entities,
-                ReadStorage<Emission>,
-                ReadStorage<Reception>,
-            )| {
-                (&*entities, &emission, &reception)
-                    .join()
-                    .for_each(|(e, _, _)| {
-                        entity_resolve.insert(e, count);
-                        count += 1;
-                    });
-            },
-        );
+    pub fn save_solution(&mut self, path: &str) {
+        let descriptor = &self.descriptor;
 
-        let mut antennas: Vec<StoredAntenna> = (0..count).map(|_| Default::default()).collect();
-
-        let reception_store = self.world.read_resource::<ReadStorage<Reception>>();
-        let positions = self.world.read_resource::<ReadStorage<AntennaPosition>>();
-        for _i in 0..count {
-            for (e, k) in &entity_resolve {
-                let recs = reception_store
-                    .get(*e)
-                    .expect("Unreachable: entity has no reception");
-                let mut antenna = StoredAntenna {
-                    position: positions
-                        .get(*e)
-                        .expect("Unreachable: antenna has no position")
-                        .position,
-                    transfer_matrix: Vec::new(),
-                };
-                for (target, data, _) in &recs.transfer {
-                    antenna.transfer_matrix.push((
-                        *entity_resolve
-                            .get(target)
-                            .expect("Unreachable: entity not a receiver"),
-                        data.clone(),
-                    ));
-                }
-                antennas[*k as usize] = antenna;
-            }
-        }
-
-        let simulation = StoredSimulation {
-            obstacles: self.obstacles.clone(),
-            antennas,
+        let serializable = crate::antennas::SerializableWorld {
+            emitters: descriptor.emitters.clone(),
+            receivers: descriptor.receivers.clone(),
+            names: descriptor.names.clone(),
         };
 
-        let data = ron::ser::to_string_pretty(&simulation, ron_pretty())
+        let data = ron::ser::to_string_pretty(&serializable, ron_pretty())
             .expect("Failed to serialize the simulation");
         std::fs::write(path, data);
     }
 
-    pub fn load(&mut self, path: &str) {
-        let _sim: StoredSimulation = ron::de::from_reader(std::io::BufReader::new(
+    pub fn from_solution(path: &str) -> Self {
+        let serializable: crate::antennas::SerializableWorld = ron::de::from_reader(std::io::BufReader::new(
             std::fs::File::open(path).expect("Could not open simulation file"),
         ))
         .expect("Could not deserialize simulation");
 
-        unimplemented!()
+        Self {
+            world: World::new(),
+            descriptor: WorldDescriptor {
+                emitters: serializable.emitters,
+                receivers: serializable.receivers,
+                names: serializable.names,
+                collisions: Vec::new(),
+            }
+        }
     }
 
-    pub fn solve(&mut self, mut world: WorldDescriptor) {
-        crate::waves::tracing(&mut world);
+    pub fn solve(&mut self) {
+        crate::waves::tracing(&mut self.descriptor);
+    }
+
+    pub fn instanciate(&mut self) {
+        let world = &self.descriptor;
 
         self.world.register::<Reception>();
         self.world.register::<Emission>();
@@ -219,34 +189,6 @@ impl Simulation {
 
         for _ in 0..time {
             dispatcher.dispatch(&mut self.world.res);
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct StoredSimulation {
-    obstacles: Vec<StoredObstacle>,
-    antennas: Vec<StoredAntenna>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct StoredObstacle {
-    mesh_location: String,
-    position: Isometry<f32>,
-    n: f32,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct StoredAntenna {
-    position: Isometry<f32>,
-    transfer_matrix: Vec<(u32, Vec<SignalEvent>)>,
-}
-
-impl Default for StoredAntenna {
-    fn default() -> Self {
-        Self {
-            position: Isometry::new([0.0, 0.0, 0.0].into(), [0.0, 0.0, 0.0].into()),
-            transfer_matrix: Vec::new(),
         }
     }
 }

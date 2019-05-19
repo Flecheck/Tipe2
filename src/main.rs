@@ -47,9 +47,7 @@ pub const TIME_PER_BEAT: Float = 1. / MAX_FREQUENCY; // seconds
 pub const CHANNEL_BOUND: usize = 65536;
 
 fn main() {
-    let mut sim = simulation::Simulation::new();
-
-    let collisions = world::absurd_collisions(500, [128.0, 128.0, 128.0]);
+    let collisions = world::basic_collisions();//absurd_collisions(500, [128.0, 128.0, 128.0]);
 
     // Battements
     /*let description = antennas::WorldDescriptor {
@@ -84,14 +82,14 @@ fn main() {
         emitters: vec![
             None,
             Some(antennas::SignalEmitter {
-                position: Point3::new(-100.0, -100.0, -100.0),
-                max_power: 1.0,
+                position: Point3::new(-5.0, 0.0, 0.0),
+                max_power: 10.0,
                 kind: simulation::EmissionKind::OFDM(vec![0xDE, 0xAD, 0xBE, 0xEF]),
             }),
         ],
         receivers: vec![
             Some(antennas::SignalReceiver {
-                position: Point3::new(100.0, 100.0, 100.0),
+                position: Point3::new(5.0, 0.0, 0.0),
                 transfers: vec![vec![], vec![]],
                 kind: simulation::ReceptionKind::OFDM,
             }),
@@ -101,9 +99,16 @@ fn main() {
         collisions,
     };
 
+    let mut sim = simulation::Simulation::new(description);
+
     println!("Solving...");
-    let time = chrono::Duration::span(|| sim.solve(description));
+    let time = chrono::Duration::span(|| sim.solve());
     println!("Solved in {} seconds", time.num_seconds());
+    println!("Saving solution...");
+    sim.save_solution("output/solution.ron");
+    //let mut sim = simulation::Simulation::from_solution("output/solution.ron");
+    println!("Instanciating solution...");
+    sim.instanciate();
     println!("Running...");
     let time =
         chrono::Duration::span(|| sim.start(vec!["ofdm_emit".into(), "ofdm_rec".into()], 0x20000));

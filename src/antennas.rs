@@ -32,17 +32,18 @@ pub struct SignalEmitter {
     pub kind: simulation::EmissionKind,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SerializableWorld {
-    pub emitters: Vec<SignalEmitter>,
-    pub receivers: Vec<SignalReceiver>,
-}
-
 pub struct WorldDescriptor {
     pub emitters: Vec<Option<SignalEmitter>>,
     pub receivers: Vec<Option<SignalReceiver>>,
     pub names: Vec<String>,
     pub collisions: Vec<(SceneObject, AABB<f32>)>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SerializableWorld {
+    pub emitters: Vec<Option<SignalEmitter>>,
+    pub receivers: Vec<Option<SignalReceiver>>,
+    pub names: Vec<String>,
 }
 
 pub struct SceneObject {

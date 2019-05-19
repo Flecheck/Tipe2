@@ -35,7 +35,7 @@ use itertools::Itertools;
 
 use std::collections::BTreeMap;
 
-const NB_SAMPLE: u32 = 10_000;
+const NB_SAMPLE: u32 = 100_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
