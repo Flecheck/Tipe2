@@ -7,7 +7,7 @@ to_show = len(one) // 16
 
 plt.figure()
 plt.subplot(1, 2, 2)
-plt.plot(range(to_show), one[:to_show] * 1000, label="output")
+plt.plot(range(to_show), one[69231:69231+to_show] * 1000, label="output")
 plt.legend()
 plt.subplot(1, 2, 1)
 plt.plot(range(to_show), two[:to_show], label="input")

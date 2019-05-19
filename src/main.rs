@@ -49,7 +49,7 @@ pub const CHANNEL_BOUND: usize = 65536;
 fn main() {
     let mut sim = simulation::Simulation::new();
 
-    let collisions = world::absurd_collisions(1000, [128.0, 128.0, 128.0]);
+    let collisions = world::absurd_collisions(500, [128.0, 128.0, 128.0]);
 
     // Battements
     /*let description = antennas::WorldDescriptor {
@@ -84,14 +84,14 @@ fn main() {
         emitters: vec![
             None,
             Some(antennas::SignalEmitter {
-                position: Point3::new(-100.0, 0.0, 0.0),
+                position: Point3::new(-100.0, -100.0, -100.0),
                 max_power: 1.0,
                 kind: simulation::EmissionKind::OFDM(vec![0xDE, 0xAD, 0xBE, 0xEF]),
             }),
         ],
         receivers: vec![
             Some(antennas::SignalReceiver {
-                position: Point3::new(100.0, 0.0, 0.0),
+                position: Point3::new(100.0, 100.0, 100.0),
                 transfers: vec![vec![], vec![]],
                 kind: simulation::ReceptionKind::OFDM,
             }),
