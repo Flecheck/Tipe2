@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-one = np.fromfile("output/ofdm_emit.bin", dtype=np.float32)
-two = np.fromfile("output/ofdm_rec.bin", dtype=np.float32)
+one = np.fromfile("output/ofdm_rec.bin", dtype=np.float32)
+two = np.fromfile("output/ofdm_emit.bin", dtype=np.float32)
 to_show = len(one) // 16
 
 plt.figure()

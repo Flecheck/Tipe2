@@ -64,3 +64,31 @@ pub fn complex_collisions() -> Vec<(SceneObject, AABB<f32>)> {
         //cuboid()
     ]
 }
+
+pub fn absurd_collisions(obstacles: u32, half_diag: [f32; 3]) -> Vec<(SceneObject, AABB<f32>)> {
+    let mut res = vec![plane(
+            [0.0, -half_diag[1] * 1.1, 0.0],
+            *constants::RefractiveIndices::soil,
+            [0.0, 1.0, 0.0],
+        )];
+    
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    
+    // The biggest cube must be small enough so we can fit "obstacles" obstacles in the volume
+    let max_size = ((half_diag[0] * half_diag[1] * half_diag[2]) / (obstacles as f32)).cbrt() * 0.5;
+
+    for _ in 0..obstacles {
+        let x = rng.gen::<f32>() * 2.0 * half_diag[0] - half_diag[0];
+        let y = rng.gen::<f32>() * 2.0 * half_diag[1] - half_diag[1];
+        let z = rng.gen::<f32>() * 2.0 * half_diag[2] - half_diag[2];
+
+        let hw = rng.gen::<f32>() * max_size;
+        let hh = rng.gen::<f32>() * max_size;
+        let hd = rng.gen::<f32>() * max_size;
+
+        res.push(cuboid([x, y, z], rng.gen::<f32>() + 0.5, [hw, hh, hd]));
+    }
+
+    res
+}
