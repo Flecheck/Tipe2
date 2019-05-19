@@ -1,5 +1,5 @@
+use crate::antennas::SignalEvent;
 use crate::ring_buffer::RingBuffer;
-use antennas::SignalEvent;
 use rayon::iter::IntoParallelIterator;
 use specs::{Component, Entity, ReadStorage, System, VecStorage, WriteStorage};
 use std::collections::VecDeque;

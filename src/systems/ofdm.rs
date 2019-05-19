@@ -1,12 +1,12 @@
 use super::propagation::{Emission, Reception};
-use antennas::SignalEvent;
+use crate::antennas::SignalEvent;
 use bit_vec::BitVec;
 use rayon::iter::IntoParallelIterator;
-use rustfft::{num_complex::Complex, num_traits::Zero, FFT, FFTplanner};
-use specs::{Component, Entity, ReadStorage, System, Join, VecStorage, WriteStorage};
+use rustfft::{num_complex::Complex, num_traits::Zero, FFTplanner, FFT};
+use specs::{Component, Entity, Join, ReadStorage, System, VecStorage, WriteStorage};
 use std::collections::VecDeque;
-use std::sync::Arc;
 use std::f32::consts::PI;
+use std::sync::Arc;
 
 const CARRIER_GROUP_SIZE: usize = 8;
 const SYMBOL_DURATION: usize = 2048;
@@ -172,7 +172,7 @@ impl<'a> System<'a> for OFDMReceive {
                 for k in 0..CARRIER_GROUP_SIZE {
                     // If the real part of output[k] is positive
                     // then phi ~= 0, else phi ~= -pi
-                    if or.symbol_result[k+1].re > 0.0 {
+                    if or.symbol_result[k + 1].re > 0.0 {
                         or.data_buffer.push(false);
                     } else {
                         or.data_buffer.push(true);
