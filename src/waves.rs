@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 use crate::antennas::{SignalEvent, WorldDescriptor};
+use crate::TIME_PER_BEAT;
+use crate::WAVE_VELOCITY;
 use crossbeam_channel as channel;
 use nalgebra::{Point3, Vector3};
 use ncollide3d::query::Ray;
@@ -7,8 +9,6 @@ use rayon;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use rayon::ThreadPoolBuilder;
 use std;
-use crate::TIME_PER_BEAT;
-use crate::WAVE_VELOCITY;
 
 use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::partitioning::BVT;
@@ -118,7 +118,15 @@ pub fn tracing(world: &mut WorldDescriptor) {
                     },
                 )
             })
-            .for_each(|x| process(x, &so, &collisions, 0));
+            .for_each(|x| {
+                let ide = x.0;
+                let mut ray = x.1;
+                let mut iter = 0;
+                while let Some((new_ray, new_iter)) = process((ide, ray), &so, &collisions, iter) {
+                    ray = new_ray;
+                    iter = new_iter;
+                }
+            });
         });
 
         // Collecting
@@ -151,9 +159,9 @@ fn process(
     out: &channel::Sender<Output>,
     bvs: &BVT<SceneObject, AABB<f32>>,
     rec: usize,
-) {
+) -> Option<(EnergyRay, usize)> {
     if energyray.energy / energyray.max_energy < MIN_GAIN {
-        return;
+        return None;
     }
     let mut visitor = ClosestRayTOICostFn::new(&energyray.ray);
     if let Some(inter) = bvs.best_first_search(&mut visitor) {
@@ -181,7 +189,7 @@ fn process(
                 time: (energyray.distance + dist_plus / (WAVE_VELOCITY * TIME_PER_BEAT)).floor()
                     as usize,
                 energy: energy,
-            })
+            });
         } else {
             if n2 / n1 > 1. {
                 // Reflection
@@ -238,10 +246,11 @@ fn process(
                 println!("{}",dist_plus)
             }*/
             //if rec < 1000 {
-            process((ide, nextrays), out, bvs, rec + 1);
+            return Some((nextrays, rec + 1));
             //}
         }
     }
+    return None;
 }
 
 fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
