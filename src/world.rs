@@ -56,6 +56,11 @@ pub fn complex_collisions() -> Vec<(SceneObject, AABB<f32>)> {
             *constants::RefractiveIndices::soil,
             [0.0, 1.0, 0.0],
         ),
+        cuboid([0.0; 3], 1.0, [2.0; 3]),
+        cuboid([5.0, 0.0, 5.0], 1.3, [2.0; 3]),
+        cuboid([-5.0, 0.0, 5.0], 1.4, [2.0; 3]),
+        cuboid([-12.0, 0.0, 0.0], 2.0, [1.0; 3]),
+        cuboid([12.0, 3.0, 0.0], 2.0, [1.0; 3]),
         //cuboid()
     ]
 }

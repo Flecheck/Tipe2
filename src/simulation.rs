@@ -13,6 +13,7 @@ use systems::AntennaPosition;
 use systems::{
     propagation::{Emission, PropagationSystem, Reception},
     simple_wave::{SimpleWave, SimpleWaveEmitter},
+    ofdm::{OFDMEmitter, OFDMReceiver},
     tracker::TrackerSystem,
 };
 
@@ -31,8 +32,17 @@ fn ron_pretty() -> PrettyConfig {
     }
 }
 
+fn check_valid(transf: &Vec<SignalEvent>) -> bool {
+    for i in 1..transf.len() {
+        if transf[i - 1].time >= transf[i].time {
+            return false;
+        }
+    }
+    true
+}
+
 pub struct Simulation {
-    world: World,
+    pub world: World,
     obstacles: Vec<StoredObstacle>,
 }
 
@@ -44,7 +54,14 @@ pub enum AntennaKind {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum EmissionKind {
-    Pulse (f32),
+    Pulse(f32),
+    OFDM(Vec<u8>),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum ReceptionKind {
+    None,
+    OFDM,
 }
 
 impl Simulation {
@@ -123,10 +140,10 @@ impl Simulation {
     pub fn solve(&mut self, mut world: WorldDescriptor) {
         crate::waves::tracing(&mut world);
 
-        println!("On est contents");
-
         self.world.register::<Reception>();
         self.world.register::<Emission>();
+        self.world.register::<OFDMReceiver>();
+        self.world.register::<OFDMEmitter>();
         self.world.register::<Name>();
         self.world.register::<SimpleWaveEmitter>();
 
@@ -137,24 +154,22 @@ impl Simulation {
                 let antenna = self
                     .world
                     .create_entity()
-                    .with(Name {
-                        name: world.names[i].clone(),
-                    })
-                    .with(Emission { current: 0.0 });
+                    .with(Emission { current: 0.0, label: world.names[i].clone() });
                 let antenna = match emit.kind {
                     EmissionKind::Pulse(pulse) => antenna.with(SimpleWaveEmitter::new(pulse)),
+                    EmissionKind::OFDM(ref data) => antenna.with(OFDMEmitter::new(data)),
                 };
                 let antenna = antenna.build();
                 entities.push((AntennaKind::Emit, antenna));
-            } else {
+            } else if let Some(ref rec) = world.receivers[i] {
                 let antenna = self
                     .world
-                    .create_entity()
-                    .with(Name {
-                        name: world.names[i].clone(),
-                    })
-                    .build();
-                entities.push((AntennaKind::Rece, antenna));
+                    .create_entity();
+                let antenna = match rec.kind {
+                    ReceptionKind::None => antenna,
+                    ReceptionKind::OFDM => antenna.with(OFDMReceiver::new()),
+                };
+                entities.push((AntennaKind::Rece, antenna.build()));
             }
         }
 
@@ -164,6 +179,11 @@ impl Simulation {
                     let mut transfer = Vec::with_capacity(rec.transfers.len());
                     for k in 0..rec.transfers.len() {
                         if entities[k].0 == AntennaKind::Emit {
+                            if !check_valid(&rec.transfers[k]) {
+                                panic!("Transfer function for rec {} emit {} not sorted", i, k);
+                            }
+
+                            // (entity, transf, max_time)
                             transfer.push((
                                 entities[k].1,
                                 rec.transfers[k].clone(),
@@ -189,6 +209,8 @@ impl Simulation {
     pub fn start(&mut self, names: Vec<String>, time: usize) {
         let mut dispatcher = DispatcherBuilder::new()
             .with(SimpleWave, "simple_wave", &[])
+            .with(crate::systems::ofdm::OFDMEmit, "odfm_emit", &[])
+            .with(crate::systems::ofdm::OFDMReceive, "ofdm_rec", &[])
             .with(PropagationSystem, "propagation_system", &[])
             .with(TrackerSystem::new(names), "tracker_system", &[])
             .build();

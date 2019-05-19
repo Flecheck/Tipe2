@@ -16,6 +16,7 @@ use simulation;
 pub struct SignalReceiver {
     pub position: Point3<f32>,
     pub transfers: Vec<Vec<SignalEvent>>, // indexed by emitter, (time, gain)
+    pub kind: simulation::ReceptionKind,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
