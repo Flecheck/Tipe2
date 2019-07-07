@@ -285,6 +285,6 @@ fn next_rays_refraction(
 ) -> (Ray<f32>, f32) {
     let normal = normalize(&inter.1.normal);
     let normal_l = dot(&normal, &ray.dir) * normal;
-    let refraction = normalize(&-(n2 / n1 * (ray.dir - normal_l) + normal_l));
+    let refraction = normalize(&-(n2 / n1 * (ray.dir - normal_l) + normal * n2*pow(2)/n1.pow(2)*(1-1/norm(normal_l).pow(2))));
     (Ray::new(ray.origin + ray.dir * inter.1.toi, refraction), n2)
 }
