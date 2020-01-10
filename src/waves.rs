@@ -1,3 +1,4 @@
+// waves.rs
 #![allow(dead_code)]
 use crate::antennas::{SignalEvent, WorldDescriptor};
 use crate::TIME_PER_BEAT;
@@ -35,7 +36,7 @@ use itertools::Itertools;
 
 use std::collections::BTreeMap;
 
-const NB_SAMPLE: u32 = 100_000;
+const NB_SAMPLE: u32 = 10_000;
 const NB_SAMPLEF: f32 = NB_SAMPLE as f32;
 
 const PI: f32 = std::f32::consts::PI;
@@ -165,7 +166,7 @@ fn process(
     }
     let mut visitor = ClosestRayTOICostFn::new(&energyray.ray);
     if let Some(inter) = bvs.best_first_search(&mut visitor) {
-        let dist_plus = norm(&(energyray.ray.dir * inter.1.toi)) / energyray.n;
+        let dist_plus = norm(&(energyray.ray.dir * inter.1.toi)) * energyray.n;
         let mut n2 = inter.0.n;
         let mut energy = energyray.energy;
         if n2 == energyray.n {
@@ -186,7 +187,7 @@ fn process(
             out.send(Output {
                 ide,
                 idr,
-                time: (energyray.distance + dist_plus / (WAVE_VELOCITY * TIME_PER_BEAT)).floor()
+                time: ((energyray.distance + dist_plus) / (WAVE_VELOCITY * TIME_PER_BEAT)).floor()
                     as usize,
                 energy: energy,
             });

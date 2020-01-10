@@ -1,16 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.fromfile("output/first.bin", dtype=np.float32)
-original = np.fromfile("output/third.bin", dtype=np.float32)
-original2 = np.fromfile("output/second.bin", dtype=np.float32)
-to_show = (len(data) - 1) // (8 * 32)
-
-for i in range(to_show):
-    original[i] = 0.0013 * (original[i] + original2[i])
+data1 = np.fromfile("output/battements_with.bin", dtype=np.float32)
+data2 = np.fromfile("output/battements_without.bin", dtype=np.float32)
+to_show = (len(data1) - 1) // 8
 
 plt.figure()
-plt.plot(range(to_show), data[:to_show], label="result")
-plt.plot(range(to_show), original[:to_show], label="original")
+plt.subplot(2, 1, 1)
+plt.plot(range(to_show), data1[:to_show])
+plt.title("Avec cube")
 plt.legend()
+
+plt.subplot(2, 1, 2)
+plt.plot(range(to_show), data2[:to_show])
+plt.title("Sans cube")
+plt.legend()
+
 plt.show()

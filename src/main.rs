@@ -54,12 +54,12 @@ fn main() {
         emitters: vec![
             None,
             Some(antennas::SignalEmitter {
-                position: Point3::new(-8.0, 0.0, 0.0),
+                position: Point3::new(6.0, 0.0, 0.0),
                 max_power: 1.0,
                 kind: simulation::EmissionKind::Pulse(1000000000.0),
             }),
             Some(antennas::SignalEmitter {
-                position: Point3::new(8.0, 0.0, 0.0),
+                position: Point3::new(-8.0, 0.0, 0.0),
                 max_power: 1.0,
                 kind: simulation::EmissionKind::Pulse(1100000000.0),
             }),
@@ -78,13 +78,14 @@ fn main() {
     };*/
 
     // OFDM
+    
     let description = antennas::WorldDescriptor {
         emitters: vec![
             None,
             Some(antennas::SignalEmitter {
                 position: Point3::new(-5.0, 0.0, 0.0),
                 max_power: 10.0,
-                kind: simulation::EmissionKind::OFDM(vec![0xDE, 0xAD, 0xBE, 0xEF]),
+                kind: simulation::EmissionKind::OFDM(vec![0xBE, 0xEF, 0xCA, 0xFE]),
             }),
         ],
         receivers: vec![
@@ -104,14 +105,14 @@ fn main() {
     println!("Solving...");
     let time = chrono::Duration::span(|| sim.solve());
     println!("Solved in {} seconds", time.num_seconds());
-    println!("Saving solution...");
-    sim.save_solution("output/solution.ron");
+    //println!("Saving solution...");
+    //sim.save_solution("output/solution.ron");
     //let mut sim = simulation::Simulation::from_solution("output/solution.ron");
     println!("Instanciating solution...");
     sim.instanciate();
     println!("Running...");
     let time =
-        chrono::Duration::span(|| sim.start(vec!["ofdm_emit".into(), "ofdm_rec".into()], 0x20000));
+        chrono::Duration::span(|| sim.start(vec!["ofdm_rec".into(), "ofdm_emit".into()], 0x20000));
     println!("Ran in {} seconds", time.num_seconds());
     println!("Gathering OFDM results...");
     sim.world.exec(

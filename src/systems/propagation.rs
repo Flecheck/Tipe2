@@ -59,7 +59,7 @@ impl<'a> System<'a> for PropagationSystem {
             for (entity, events, max_time) in rec.transfer.iter() {
                 if let Some(emit) = emission.get(*entity) {
                     // Parallel version
-                    let ptr = UnsafePointer(&mut rec.receive_buffer);
+                    /*let ptr = UnsafePointer(&mut rec.receive_buffer);
                     unsafe {
                         events.into_iter().for_each(|e| {
                             *(*ptr.0).get_mut(e.time).unwrap_or_else(|| {
@@ -70,18 +70,17 @@ impl<'a> System<'a> for PropagationSystem {
                                 )
                             }) += emit.current * e.gain;
                         });
-                    }
+                    }*/
 
                     // Sequential version
-                    /*for e in events.into_iter() {
+                    for e in events.into_iter() {
                         *rec.receive_buffer.get_mut(e.time).unwrap_or_else(|| {
                             panic!("Unreachable: sample not allocated, max_time: {}", max_time)
                         }) += emit.current * e.gain;
-                    }*/
+                    }
                 }
             }
 
-            //println!("{:?}", rec.receive_buffer);
             rec.current = rec.receive_buffer.pop();
         });
     }

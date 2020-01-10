@@ -45,7 +45,7 @@ pub fn basic_collisions() -> Vec<(SceneObject, AABB<f32>)> {
             *constants::RefractiveIndices::soil,
             [0.0, 1.0, 0.0],
         ),*/
-        cuboid([0.0; 3], 1.0, [2.0; 3]),
+        cuboid([0.0; 3], 1.5, [2.0; 3]),
     ]
 }
 

@@ -144,8 +144,8 @@ impl<'a> System<'a> for OFDMReceive {
     fn run(&mut self, (mut reception, mut ofdmr): Self::SystemData) {
         (&mut reception, &mut ofdmr).join().for_each(|(rec, or)| {
             if !or.began {
+                // Wait until initial data is received
                 if rec.current != 0.0 {
-                    println!("Starts at {}", or.before_start);
                     or.began = true;
                 } else {
                     or.before_start += 1;
