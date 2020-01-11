@@ -1,10 +1,7 @@
 use super::propagation::{Emission, Reception};
-use crate::antennas::SignalEvent;
 use bit_vec::BitVec;
-use rayon::iter::IntoParallelIterator;
 use rustfft::{num_complex::Complex, num_traits::Zero, FFTplanner, FFT};
-use specs::{Component, Entity, Join, ReadStorage, System, VecStorage, WriteStorage};
-use std::collections::VecDeque;
+use specs::{Component, Join, System, VecStorage, WriteStorage};
 use std::f32::consts::PI;
 use std::sync::Arc;
 

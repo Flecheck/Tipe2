@@ -1,8 +1,6 @@
 use crate::antennas::SignalEvent;
 use crate::ring_buffer::RingBuffer;
-use rayon::iter::IntoParallelIterator;
 use specs::{Component, Entity, ReadStorage, System, VecStorage, WriteStorage};
-use std::collections::VecDeque;
 
 pub struct Emission {
     pub current: f32,
@@ -59,7 +57,9 @@ impl<'a> System<'a> for PropagationSystem {
             for (entity, events, max_time) in rec.transfer.iter() {
                 if let Some(emit) = emission.get(*entity) {
                     // Parallel version
-                    /*let ptr = UnsafePointer(&mut rec.receive_buffer);
+                    /*
+                    use rayon::iter::IntoParallelIterator;
+                    let ptr = UnsafePointer(&mut rec.receive_buffer);
                     unsafe {
                         events.into_iter().for_each(|e| {
                             *(*ptr.0).get_mut(e.time).unwrap_or_else(|| {

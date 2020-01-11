@@ -1,26 +1,14 @@
-use crossbeam_channel::{bounded, Receiver, Sender};
-use ncollide3d::bounding_volume::aabb::AABB;
-use ncollide3d::math::Isometry;
-use ncollide3d::partitioning::BVT;
 use serde::{Deserialize, Serialize};
-use std::cmp::{max, min};
-use std::collections::{HashMap, VecDeque};
-use std::thread;
-use crate::CHANNEL_BOUND;
 
-use crate::antennas::{SceneObject, SerializableWorld, SignalEvent, SignalReceiver, WorldDescriptor};
-use crate::systems::AntennaPosition;
+use crate::antennas::{SignalEvent, WorldDescriptor};
 use crate::systems::{
+    ofdm::{OFDMEmitter, OFDMReceiver},
     propagation::{Emission, PropagationSystem, Reception},
     simple_wave::{SimpleWave, SimpleWaveEmitter},
-    ofdm::{OFDMEmitter, OFDMReceiver},
     tracker::TrackerSystem,
 };
 
-use specs::{
-    Component, DispatcherBuilder, Entities, Entity, Join, ReadStorage, VecStorage, World,
-    WriteStorage,
-};
+use specs::{Component, DispatcherBuilder, Entity, VecStorage, World, WriteStorage};
 
 use ron::ser::PrettyConfig;
 
@@ -83,14 +71,15 @@ impl Simulation {
 
         let data = ron::ser::to_string_pretty(&serializable, ron_pretty())
             .expect("Failed to serialize the simulation");
-        std::fs::write(path, data);
+        std::fs::write(path, data).expect("Failed to save solution to disk");
     }
 
     pub fn from_solution(path: &str) -> Self {
-        let serializable: crate::antennas::SerializableWorld = ron::de::from_reader(std::io::BufReader::new(
-            std::fs::File::open(path).expect("Could not open simulation file"),
-        ))
-        .expect("Could not deserialize simulation");
+        let serializable: crate::antennas::SerializableWorld =
+            ron::de::from_reader(std::io::BufReader::new(
+                std::fs::File::open(path).expect("Could not open simulation file"),
+            ))
+            .expect("Could not deserialize simulation");
 
         Self {
             world: World::new(),
@@ -99,7 +88,7 @@ impl Simulation {
                 receivers: serializable.receivers,
                 names: serializable.names,
                 collisions: Vec::new(),
-            }
+            },
         }
     }
 
@@ -121,10 +110,10 @@ impl Simulation {
         for i in 0..world.names.len() {
             use specs::Builder;
             if let Some(ref emit) = world.emitters[i] {
-                let antenna = self
-                    .world
-                    .create_entity()
-                    .with(Emission { current: 0.0, label: world.names[i].clone() });
+                let antenna = self.world.create_entity().with(Emission {
+                    current: 0.0,
+                    label: world.names[i].clone(),
+                });
                 let antenna = match emit.kind {
                     EmissionKind::Pulse(pulse) => antenna.with(SimpleWaveEmitter::new(pulse)),
                     EmissionKind::OFDM(ref data) => antenna.with(OFDMEmitter::new(data)),
@@ -132,9 +121,7 @@ impl Simulation {
                 let antenna = antenna.build();
                 entities.push((AntennaKind::Emit, antenna));
             } else if let Some(ref rec) = world.receivers[i] {
-                let antenna = self
-                    .world
-                    .create_entity();
+                let antenna = self.world.create_entity();
                 let antenna = match rec.kind {
                     ReceptionKind::None => antenna,
                     ReceptionKind::OFDM => antenna.with(OFDMReceiver::new()),

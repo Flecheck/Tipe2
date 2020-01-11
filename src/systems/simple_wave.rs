@@ -1,8 +1,7 @@
-use rayon::iter::ParallelIterator;
-use specs::{Component, Entity, System, VecStorage, WriteStorage};
-use specs::{Join, ParJoin};
 use crate::systems::propagation::Emission;
 use crate::TIME_PER_BEAT;
+use specs::Join;
+use specs::{Component, System, VecStorage, WriteStorage};
 
 pub struct SimpleWaveEmitter {
     phase: f32,

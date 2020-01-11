@@ -20,19 +20,16 @@ use ncollide3d::query::RayIntersection;
 
 use rand;
 
-use nalgebra::{dot, norm, normalize};
-
 use crate::antennas::create_bvt_tuple_receiver;
 use nalgebra::geometry::UnitQuaternion;
 use nalgebra::{Isometry3, Translation3};
 
+use ncollide3d::partitioning::BVH;
 use ncollide3d::shape::Ball;
 
 use std::mem;
 
-use crate::constants::RefractiveIndices;
-
-use itertools::Itertools;
+use crate::constants::refractive_indices;
 
 use std::collections::BTreeMap;
 
@@ -115,7 +112,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                         energy,
                         distance,
                         max_energy: energy,
-                        n: *RefractiveIndices::air,
+                        n: *refractive_indices::AIR,
                     },
                 )
             })
@@ -165,12 +162,15 @@ fn process(
         return None;
     }
     let mut visitor = ClosestRayTOICostFn::new(&energyray.ray);
-    if let Some(inter) = bvs.best_first_search(&mut visitor) {
-        let dist_plus = norm(&(energyray.ray.dir * inter.1.toi)) * energyray.n;
+    if let Some(inter) = bvs
+        .best_first_search(&mut visitor)
+        .map(|(id, r)| (bvs.content(id).1.expect("no data in node"), r))
+    {
+        let dist_plus = (energyray.ray.dir * inter.1.toi).norm() * energyray.n;
         let mut n2 = inter.0.n;
         let mut energy = energyray.energy;
         if n2 == energyray.n {
-            n2 = *RefractiveIndices::air;
+            n2 = *refractive_indices::AIR;
             energy = energy * (-inter.0.absorbance * dist_plus as f32).exp();
         } else {
             energy = energy * (-ABSORBANCE_AIR * dist_plus as f32).exp();
@@ -181,7 +181,7 @@ fn process(
 
         let rand: f32 = rand::random();
 
-        let normal = normalize(&inter.1.normal);
+        let normal = inter.1.normal.normalize();
 
         if let Some(idr) = inter.0.receiver {
             out.send(Output {
@@ -196,7 +196,7 @@ fn process(
                 // Reflection
 
                 let reflection = next_rays_reflection(&energyray.ray, &inter);
-                let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
+                let normal_l = (normal.dot(&reflection.dir) * normal).normalize();
 
                 nextrays = Some(EnergyRay {
                     ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
@@ -209,7 +209,7 @@ fn process(
 
             // Refraction
             if n2 / n1 <= 1. {
-                let cos1 = norm(&(dot(&normal, &energyray.ray.dir) * normal - energyray.ray.dir));
+                let cos1 = (normal.dot(&energyray.ray.dir) * normal - energyray.ray.dir).norm();
                 let cos2 = (1. - (n1 / n2) * (n1 / n2) * (1. - cos1 * cos1).sqrt()).sqrt();
 
                 let rtm = ((n1 * cos2 - n2 * cos1) / (n1 * cos2 + n2 * cos1)).abs();
@@ -218,7 +218,7 @@ fn process(
                     // Reflection
                     {
                         let reflection = next_rays_reflection(&energyray.ray, &inter);
-                        let normal_l = normalize(&(dot(&normal, &reflection.dir) * normal));
+                        let normal_l = (normal.dot(&reflection.dir) * normal).normalize();
 
                         nextrays = Some(EnergyRay {
                             ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
@@ -230,7 +230,7 @@ fn process(
                     }
                 } else {
                     let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
-                    let normal_l = normalize(&(dot(&normal, &refraction.0.dir) * normal));
+                    let normal_l = (normal.dot(&refraction.0.dir) * normal).normalize();
 
                     nextrays = Some(EnergyRay {
                         ray: refraction.0.translate_by(normal_l * BOUNCE_MARGIN),
@@ -263,7 +263,7 @@ fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
             let y = theta.sin() * phi.sin();
             let z = theta.cos();
             (
-                Ray::new(pos.clone(), normalize(&Vector3::new(x, y, z))),
+                Ray::new(pos.clone(), Vector3::new(x, y, z).normalize()),
                 2. * phi * (1. - (theta / 2.).cos()) / NB_SAMPLEF.powi(2),
             )
         })
@@ -271,9 +271,9 @@ fn emit<'a>(pos: Point3<f32>) -> impl ParallelIterator<Item = (Ray<f32>, f32)> {
 }
 
 fn next_rays_reflection(ray: &Ray<f32>, inter: &(&SceneObject, RayIntersection<f32>)) -> Ray<f32> {
-    let normal = normalize(&inter.1.normal);
+    let normal = inter.1.normal.normalize();
 
-    let reflection = normalize(&(2. * dot(&normal, &ray.dir) * normal - ray.dir));
+    let reflection = (2. * normal.dot(&ray.dir) * normal - ray.dir).normalize();
 
     Ray::new(ray.origin + ray.dir * inter.1.toi, reflection)
 }
@@ -284,8 +284,10 @@ fn next_rays_refraction(
     n1: f32,
     n2: f32,
 ) -> (Ray<f32>, f32) {
-    let normal = normalize(&inter.1.normal);
-    let normal_l = dot(&normal, &ray.dir) * normal;
-    let refraction = normalize(&-(n2 / n1 * (ray.dir - normal_l) + normal * n2*pow(2)/n1.pow(2)*(1-1/norm(normal_l).pow(2))));
+    let normal = inter.1.normal.normalize();
+    let normal_l = normal.dot(&ray.dir) * normal;
+    let refraction = (-(n2 / n1 * (ray.dir - normal_l)
+        + normal * n2.powi(2) / n1.powi(2) * (1.0 - 1.0 / normal_l.norm().powi(2))))
+    .normalize();
     (Ray::new(ray.origin + ray.dir * inter.1.toi, refraction), n2)
 }

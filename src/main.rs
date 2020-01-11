@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 extern crate clap;
 extern crate crossbeam_channel;
 extern crate crossbeam_deque;
@@ -14,27 +16,15 @@ extern crate bit_vec;
 extern crate chrono;
 extern crate itertools;
 
-use clap::{App, SubCommand};
-
 mod antennas;
 mod constants;
 mod ring_buffer;
 mod simulation;
 mod systems;
-mod transfer;
 mod waves;
 mod world;
 
-use crate::antennas::create_bvt_tuple;
-
-use nalgebra::Isometry3;
 use nalgebra::Point3;
-use nalgebra::Translation3;
-use nalgebra::Unit;
-use nalgebra::UnitQuaternion;
-use ncollide3d::partitioning::BVT;
-use ncollide3d::shape::Cuboid;
-use ncollide3d::shape::Plane;
 
 use specs::ReadStorage;
 

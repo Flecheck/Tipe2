@@ -1,6 +1,4 @@
 use ncollide3d::bounding_volume::aabb::AABB;
-use ncollide3d::bounding_volume::HasBoundingVolume;
-use ncollide3d::query::RayCast;
 
 use crate::antennas::create_bvt_tuple;
 use crate::antennas::SceneObject;
@@ -8,11 +6,9 @@ use crate::antennas::SceneObject;
 use crate::constants;
 
 use nalgebra::Isometry3;
-use nalgebra::Point3;
 use nalgebra::Translation3;
 use nalgebra::Unit;
 use nalgebra::UnitQuaternion;
-use ncollide3d::partitioning::BVT;
 use ncollide3d::shape::Cuboid;
 use ncollide3d::shape::Plane;
 
@@ -42,7 +38,7 @@ pub fn basic_collisions() -> Vec<(SceneObject, AABB<f32>)> {
     vec![
         /*plane(
             [0.0, -8.0, 0.0],
-            *constants::RefractiveIndices::soil,
+            *constants::refractive_indices::soil,
             [0.0, 1.0, 0.0],
         ),*/
         cuboid([0.0; 3], 1.5, [2.0; 3]),
@@ -53,7 +49,7 @@ pub fn complex_collisions() -> Vec<(SceneObject, AABB<f32>)> {
     vec![
         plane( // Ground
             [0.0, -8.0, 0.0],
-            *constants::RefractiveIndices::soil,
+            *constants::refractive_indices::SOIL,
             [0.0, 1.0, 0.0],
         ),
         cuboid([0.0; 3], 1.0, [2.0; 3]),
@@ -68,7 +64,7 @@ pub fn complex_collisions() -> Vec<(SceneObject, AABB<f32>)> {
 pub fn absurd_collisions(obstacles: u32, half_diag: [f32; 3]) -> Vec<(SceneObject, AABB<f32>)> {
     let mut res = vec![plane(
             [0.0, -half_diag[1] * 1.1, 0.0],
-            *constants::RefractiveIndices::soil,
+            *constants::refractive_indices::SOIL,
             [0.0, 1.0, 0.0],
         )];
     

@@ -3,14 +3,14 @@ use ncollide3d::bounding_volume::aabb;
 use ncollide3d::bounding_volume::aabb::AABB;
 use ncollide3d::bounding_volume::HasBoundingVolume;
 use ncollide3d::math::Isometry;
-use ncollide3d::partitioning::BVTCostFn;
-use ncollide3d::partitioning::BVT;
+use ncollide3d::partitioning::BestFirstVisitStatus;
+use ncollide3d::partitioning::BestFirstVisitor;
 use ncollide3d::query::Ray;
 use ncollide3d::query::RayCast;
 use ncollide3d::query::RayIntersection;
 
-use crate::waves::ABSORBANCE_AIR;
 use crate::simulation;
+use crate::waves::ABSORBANCE_AIR;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalReceiver {
@@ -47,7 +47,7 @@ pub struct SerializableWorld {
 }
 
 pub struct SceneObject {
-    geometry: Box<RayCast<f32> + Sync + Send>,
+    geometry: Box<dyn RayCast<f32> + Sync + Send>,
     transform: Isometry<f32>,
     pub n: f32,
     pub absorbance: f32,
@@ -89,13 +89,40 @@ impl<'a> ClosestRayTOICostFn<'a> {
     }
 }
 
-impl<'a> BVTCostFn<f32, SceneObject, AABB<f32>> for ClosestRayTOICostFn<'a> {
-    type UserData = RayIntersection<f32>;
-    fn compute_bv_cost(&mut self, bv: &AABB<f32>) -> Option<f32> {
+impl<'a> BestFirstVisitor<f32, SceneObject, AABB<f32>> for ClosestRayTOICostFn<'a> {
+    type Result = RayIntersection<f32>;
+    /*fn compute_bv_cost(&mut self, bv: &AABB<f32>) -> Option<f32> {
         bv.toi_with_ray(&Isometry::identity(), self.ray, true)
     }
     fn compute_b_cost(&mut self, b: &SceneObject) -> Option<(f32, RayIntersection<f32>)> {
         b.cast(self.ray).map(|inter| (inter.toi, inter))
+    }*/
+
+    #[inline]
+    fn visit(
+        &mut self,
+        best: f32,
+        aabb: &AABB<f32>,
+        data: Option<&SceneObject>,
+    ) -> BestFirstVisitStatus<f32, Self::Result> {
+        let dist = aabb
+            .toi_with_ray(&Isometry::identity(), self.ray, true).unwrap_or(std::f32::INFINITY);
+
+        let mut res = BestFirstVisitStatus::Continue {
+            cost: dist,
+            result: None,
+        };
+
+        if let Some(b) = data {
+            if dist < best {
+                res = BestFirstVisitStatus::Continue {
+                    cost: dist,
+                    result: b.cast(self.ray),
+                };
+            }
+        }
+
+        res
     }
 }
 
