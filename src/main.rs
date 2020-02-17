@@ -69,7 +69,7 @@ fn main() {
 
     // OFDM
     
-    let description = antennas::WorldDescriptor {
+    /*let description = antennas::WorldDescriptor {
         emitters: vec![
             None,
             Some(antennas::SignalEmitter {
@@ -87,6 +87,15 @@ fn main() {
             None,
         ],
         names: vec!["ofdm_rec".into(), "ofdm_emit".into()],
+        collisions,
+    };*/
+
+    // Moving
+    let (receivers, emitters, names) = world::moving_antennas();
+    let description = antennas::WorldDescriptor {
+        emitters,
+        receivers,
+        names,
         collisions,
     };
 

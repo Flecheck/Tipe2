@@ -102,6 +102,7 @@ pub fn tracing(world: &mut WorldDescriptor) {
                     .map(move |ray| (ray.0, x.max_power * ray.1, 0.))
                     .map(move |ray| (ide, ray))
             });
+        
         // Processing
         s.spawn(move |_s| {
             rays.map(|(ide, (ray, energy, distance))| {
@@ -158,7 +159,7 @@ fn process(
     bvs: &BVT<SceneObject, AABB<f32>>,
     rec: usize,
 ) -> Option<(EnergyRay, usize)> {
-    if energyray.energy / energyray.max_energy < MIN_GAIN {
+    if (energyray.energy / energyray.max_energy).abs() < MIN_GAIN {
         return None;
     }
     let mut visitor = ClosestRayTOICostFn::new(&energyray.ray);
@@ -177,12 +178,11 @@ fn process(
         }
         let n1 = energyray.n;
 
-        let mut nextrays = None;
-
         let rand: f32 = rand::random();
 
         let normal = inter.1.normal.normalize();
 
+        // If the ray crossed an antenna, record the encounter
         if let Some(idr) = inter.0.receiver {
             out.send(Output {
                 ide,
@@ -191,65 +191,65 @@ fn process(
                     as usize,
                 energy: energy,
             });
-        } else {
-            if n2 / n1 > 1. {
-                // Reflection
+        }
 
-                let reflection = next_rays_reflection(&energyray.ray, &inter);
-                let normal_l = (normal.dot(&reflection.dir) * normal).normalize();
+        let nextrays;
+
+        if n2 / n1 > 1. {
+            // Total reflection
+
+            let reflection = next_rays_reflection(&energyray.ray, &inter);
+            let normal_l = (normal.dot(&reflection.dir) * normal).normalize();
+
+            nextrays = Some(EnergyRay {
+                ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
+                energy: -energy,
+                distance: energyray.distance + dist_plus,
+                max_energy: energyray.max_energy,
+                n: n1,
+            });
+        } else {
+            let cos1 = (normal.dot(&energyray.ray.dir) * normal - energyray.ray.dir).norm();
+            let cos2 = (1. - (n1 / n2) * (n1 / n2) * (1. - cos1 * cos1).sqrt()).sqrt();
+
+            let rtm = ((n1 * cos2 - n2 * cos1) / (n1 * cos2 + n2 * cos1)).abs();
+
+            if rand < rtm {
+                // Reflection
+                {
+                    let reflection = next_rays_reflection(&energyray.ray, &inter);
+                    let normal_l = (normal.dot(&reflection.dir) * normal).normalize();
+
+                    nextrays = Some(EnergyRay {
+                        ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
+                        energy: -energy,
+                        distance: energyray.distance + dist_plus,
+                        max_energy: energyray.max_energy,
+                        n: n1,
+                    });
+                }
+            } else {
+                // Refraction
+                let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
+                let normal_l = (normal.dot(&refraction.0.dir) * normal).normalize();
 
                 nextrays = Some(EnergyRay {
-                    ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
+                    ray: refraction.0.translate_by(normal_l * BOUNCE_MARGIN),
                     energy: energy,
                     distance: energyray.distance + dist_plus,
                     max_energy: energyray.max_energy,
-                    n: n1,
+                    n: n2,
                 });
             }
-
-            // Refraction
-            if n2 / n1 <= 1. {
-                let cos1 = (normal.dot(&energyray.ray.dir) * normal - energyray.ray.dir).norm();
-                let cos2 = (1. - (n1 / n2) * (n1 / n2) * (1. - cos1 * cos1).sqrt()).sqrt();
-
-                let rtm = ((n1 * cos2 - n2 * cos1) / (n1 * cos2 + n2 * cos1)).abs();
-
-                if rand < rtm {
-                    // Reflection
-                    {
-                        let reflection = next_rays_reflection(&energyray.ray, &inter);
-                        let normal_l = (normal.dot(&reflection.dir) * normal).normalize();
-
-                        nextrays = Some(EnergyRay {
-                            ray: reflection.translate_by(normal_l * BOUNCE_MARGIN),
-                            energy: energy,
-                            distance: energyray.distance + dist_plus,
-                            max_energy: energyray.max_energy,
-                            n: n1,
-                        });
-                    }
-                } else {
-                    let refraction = next_rays_refraction(&energyray.ray, &inter, energyray.n, n2);
-                    let normal_l = (normal.dot(&refraction.0.dir) * normal).normalize();
-
-                    nextrays = Some(EnergyRay {
-                        ray: refraction.0.translate_by(normal_l * BOUNCE_MARGIN),
-                        energy: energy,
-                        distance: energyray.distance + dist_plus,
-                        max_energy: energyray.max_energy,
-                        n: n2,
-                    });
-                }
-            }
-
-            let nextrays = nextrays.unwrap();
-            /*if rec % 1000 == 0 && rec != 0 {
-                println!("{}",dist_plus)
-            }*/
-            //if rec < 1000 {
-            return Some((nextrays, rec + 1));
-            //}
         }
+
+        let nextrays = nextrays.unwrap();
+        /*if rec % 1000 == 0 && rec != 0 {
+            println!("{}",dist_plus)
+        }*/
+        //if rec < 1000 {
+        return Some((nextrays, rec + 1));
+        //}
     }
     return None;
 }

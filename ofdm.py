@@ -9,9 +9,6 @@ fft = np.imag(np.fft.fft(two[:2048]))
 fft2 = np.imag(np.fft.fft(one[1903:1903+2048]))
 
 def autolabel(rects):
-    """
-    Attach a text label above each bar displaying its height
-    """
     for rect in rects:
         color = "white"
         if rect.get_height() < 0:
@@ -36,11 +33,11 @@ plt.legend()
 plt.subplot(2, 2, 3)
 autolabel(plt.bar([x+1 for x in range(8)], fft[1:9], width=0.8))
 plt.title("Parties réelles du premier symbole émis")
-plt.xlabel("Harmoniques")
+plt.xlabel("Sous-porteuses")
 plt.legend()
 plt.subplot(2, 2, 4)
 autolabel(plt.bar([x+1 for x in range(8)], fft2[1:9], width=0.8))
 plt.title("Parties réelles du premier symbole reçu")
-plt.xlabel("Harmoniques")
+plt.xlabel("Sous-porteuses")
 plt.legend()
 plt.show()

@@ -1,3 +1,4 @@
+use super::moving::ProxyReception;
 use super::propagation::{Emission, Reception};
 use byteorder::{LittleEndian, WriteBytesExt};
 use specs::prelude::*;
@@ -22,13 +23,23 @@ impl TrackerSystem {
 }
 
 impl<'a> System<'a> for TrackerSystem {
-    type SystemData = (ReadStorage<'a, Reception>, ReadStorage<'a, Emission>);
+    type SystemData = (
+        ReadStorage<'a, Reception>,
+        ReadStorage<'a, ProxyReception>,
+        ReadStorage<'a, Emission>,
+    );
 
-    fn run(&mut self, (recs, emits): Self::SystemData) {
+    fn run(&mut self, (recs, proxies, emits): Self::SystemData) {
         for rec in recs.join() {
             let mut file = self.files.get(&rec.label).expect("Name not found");
             file.write_f32::<LittleEndian>(rec.current)
                 .expect("Failed to write receive value in Tracker");
+        }
+
+        for proxy in proxies.join() {
+            let mut file = self.files.get(&proxy.label).expect("Name not found");
+            file.write_f32::<LittleEndian>(proxy.current)
+                .expect("Failed to write proxy value in Tracker");
         }
 
         for emit in emits.join() {

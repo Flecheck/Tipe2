@@ -5,6 +5,8 @@ use crate::antennas::SceneObject;
 
 use crate::constants;
 
+use super::simulation::{EmissionKind, ReceptionKind};
+
 use nalgebra::Isometry3;
 use nalgebra::Translation3;
 use nalgebra::Unit;
@@ -87,4 +89,8 @@ pub fn absurd_collisions(obstacles: u32, half_diag: [f32; 3]) -> Vec<(SceneObjec
     }
 
     res
+}
+
+pub fn moving_antennas() -> (Vec<EmissionKind>, Vec<ReceptionKind>, Vec<String>) {
+    let mut emiters = Vec::new()
 }

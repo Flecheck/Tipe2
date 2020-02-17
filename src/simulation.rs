@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::antennas::{SignalEvent, WorldDescriptor};
 use crate::systems::{
+    moving::{MovementHandler, ProxyReception},
     ofdm::{OFDMEmitter, OFDMReceiver},
     propagation::{Emission, PropagationSystem, Reception},
     simple_wave::{SimpleWave, SimpleWaveEmitter},
@@ -32,6 +33,7 @@ fn check_valid(transf: &Vec<SignalEvent>) -> bool {
 pub struct Simulation {
     pub world: World,
     pub descriptor: WorldDescriptor,
+    moving_points: Vec<Entity>,
 }
 
 #[derive(PartialEq, Eq)]
@@ -50,6 +52,8 @@ pub enum EmissionKind {
 pub enum ReceptionKind {
     None,
     OFDM,
+    MovingPoint,
+    Moving,
 }
 
 impl Simulation {
@@ -57,6 +61,7 @@ impl Simulation {
         Self {
             world: World::new(),
             descriptor,
+            moving_points: Vec::new(),
         }
     }
 
@@ -89,6 +94,7 @@ impl Simulation {
                 names: serializable.names,
                 collisions: Vec::new(),
             },
+            moving_points: Vec::new(),
         }
     }
 
@@ -100,6 +106,7 @@ impl Simulation {
         let world = &self.descriptor;
 
         self.world.register::<Reception>();
+        self.world.register::<ProxyReception>();
         self.world.register::<Emission>();
         self.world.register::<OFDMReceiver>();
         self.world.register::<OFDMEmitter>();
@@ -107,6 +114,7 @@ impl Simulation {
         self.world.register::<SimpleWaveEmitter>();
 
         let mut entities: Vec<(AntennaKind, Entity)> = Vec::with_capacity(world.names.len());
+        let mut moving_points: Vec<Entity> = Vec::new();
         for i in 0..world.names.len() {
             use specs::Builder;
             if let Some(ref emit) = world.emitters[i] {
@@ -123,12 +131,22 @@ impl Simulation {
             } else if let Some(ref rec) = world.receivers[i] {
                 let antenna = self.world.create_entity();
                 let antenna = match rec.kind {
-                    ReceptionKind::None => antenna,
-                    ReceptionKind::OFDM => antenna.with(OFDMReceiver::new()),
+                    ReceptionKind::None => antenna.build(),
+                    ReceptionKind::OFDM => antenna.with(OFDMReceiver::new()).build(),
+                    ReceptionKind::MovingPoint => {
+                        let a = antenna.build();
+                        moving_points.push(a);
+                        a
+                    }
+                    ReceptionKind::Moving => antenna
+                        .with(ProxyReception::new(world.names[i].clone()))
+                        .build(),
                 };
-                entities.push((AntennaKind::Rece, antenna.build()));
+                entities.push((AntennaKind::Rece, antenna));
             }
         }
+
+        self.moving_points = moving_points;
 
         self.world.exec(|mut recs: WriteStorage<Reception>| {
             for i in 0..world.names.len() {
@@ -163,13 +181,18 @@ impl Simulation {
         });
     }
 
-    pub fn start(&mut self, names: Vec<String>, time: usize) {
+    pub fn start(&mut self, to_track: Vec<String>, time: usize) {
         let mut dispatcher = DispatcherBuilder::new()
             .with(SimpleWave, "simple_wave", &[])
             .with(crate::systems::ofdm::OFDMEmit, "odfm_emit", &[])
             .with(crate::systems::ofdm::OFDMReceive, "ofdm_rec", &[])
             .with(PropagationSystem, "propagation_system", &[])
-            .with(TrackerSystem::new(names), "tracker_system", &[])
+            .with(TrackerSystem::new(to_track), "tracker_system", &[])
+            .with(
+                MovementHandler::new(self.moving_points.clone()),
+                "movement_handler",
+                &["propagation_system"],
+            )
             .build();
 
         println!("Dispatching!");
